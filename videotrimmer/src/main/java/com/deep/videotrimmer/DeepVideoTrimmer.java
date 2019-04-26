@@ -157,7 +157,7 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 //							previousZ = 0;
 //						}
 						ObjectAnimator objectAnimator = ObjectAnimator.ofInt(timeLineProgressBar, "progress", (int)z);
-						// TODO: 4/26/19 write this in as dynamic? or nah?
+						// TODO: 4/26/19 write this in as dynamic? or nah? todo make this indeterminate as an option?
 						objectAnimator.setDuration(750);
 						objectAnimator.start();
 //						timeLineProgressBar.setProgress((z > 100) ? 100 : (int)z);
