@@ -40,8 +40,7 @@ public final class BackgroundExecutor {
     private static final List<Task> TASKS = new ArrayList<>();
     private static final ThreadLocal<String> CURRENT_SERIAL = new ThreadLocal<>();
 
-    private BackgroundExecutor() {
-    }
+    private BackgroundExecutor() { }
 
     /**
      * Execute a runnable after the given delay.

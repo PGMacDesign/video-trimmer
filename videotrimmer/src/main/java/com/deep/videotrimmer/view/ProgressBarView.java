@@ -30,7 +30,9 @@ import android.graphics.Rect;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.ProgressBar;
 
 import com.deep.videotrimmer.R;
 import com.deep.videotrimmer.interfaces.OnProgressVideoListener;
@@ -73,6 +75,7 @@ public class ProgressBarView extends View implements OnRangeSeekBarListener, OnP
 
         mProgressColor.setAntiAlias(true);
         mProgressColor.setColor(lineProgress);
+        
     }
 
     @Override
