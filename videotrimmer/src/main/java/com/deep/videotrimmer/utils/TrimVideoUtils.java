@@ -27,12 +27,14 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.LoggingCore;
 import com.coremedia.iso.boxes.Container;
 import com.deep.videotrimmer.interfaces.OnTrimVideoListener;
 import com.googlecode.mp4parser.FileDataSourceViaHeapImpl;
 import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.Track;
 import com.googlecode.mp4parser.authoring.builder.DefaultMp4Builder;
+import com.googlecode.mp4parser.authoring.builder.Mp4Builder;
 import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
 import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
 import com.googlecode.mp4parser.authoring.tracks.CroppedTrack;
@@ -127,9 +129,9 @@ public class TrimVideoUtils {
         if (!dst.exists()) {
             dst.createNewFile();
         }
-
-        Container out = new DefaultMp4Builder().build(movie);
-
+        LoggingCore.setShouldLog(true);
+        Container out = new DefaultMp4Builder().build(movie, null);
+        
         FileOutputStream fos = new FileOutputStream(dst);
         FileChannel fc = fos.getChannel();
         out.writeContainer(fc);

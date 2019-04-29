@@ -21,11 +21,20 @@ Whatsapp like video trimmer to trim videos within a defined file size.
 
 **Gradle :**
 
-maven {
-       url 'https://dl.bintray.com/deeppatel13/maven/'
-   }
+//Add This to your top level gradle file:
+
+allprojects {
+    repositories {
+        .
+        .
+        .
+        maven { url 'https://jitpack.io' }
+    }
+}
+
+//Add this to your module level / app level file: 
    
-implementation 'com.deep.videotrimmer:videotrimmer:1.0'
+implementation 'com.github.PGMacDesign:videotrimmer:1.1.0'
 
 >**Note:** If you have jCenter() added, then no need to write maven dependancy. only using implementation line it will be integrated.
 

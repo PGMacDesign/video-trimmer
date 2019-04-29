@@ -4,7 +4,7 @@ ext {
     bintrayRepo = 'videotrimmer'
     bintrayName = 'videotrimmer'
 
-    publishedGroupId = 'com.deep.videotrimmer'
+    publishedGroupId = 'com.pgmacdesign.videotrimmer'
     libraryName = 'videotrimmer'
     artifact = 'videotrimmer'
 
@@ -13,7 +13,7 @@ ext {
     siteUrl = 'https://github.com/deepandroid/videotrimmer'
     gitUrl = 'https://github.com/deepandroid/videotrimmer.git'
 
-    libraryVersion = '1.0.1'
+    libraryVersion = '1.1.0'
 
     developerId = 'deeppatel'
     developerName = 'Deep Patel'
@@ -29,7 +29,7 @@ android {
         minSdkVersion 16
         targetSdkVersion 27
         versionCode 1
-        versionName "1.0.1"
+        versionName "1.1.0"
         vectorDrawables.useSupportLibrary = true
     }
     buildTypes {
@@ -41,7 +41,8 @@ android {
 }
 dependencies {
     implementation 'com.android.support:appcompat-v7:27.1.1'
-    implementation 'com.googlecode.mp4parser:isoparser:1.1.20'
+//    implementation 'com.googlecode.mp4parser:isoparser:1.1.20'
+    implementation 'com.github.PGMacDesign.mp4parser:isoparser:1.1.25'
 }
 apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
 apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/bintrayv1.gradle'

@@ -2,13 +2,21 @@ package com.deep.videotrimmer;
 
 import android.animation.ObjectAnimator;
 import android.content.Context;
+import android.content.res.ColorStateList;
+import android.content.res.Resources;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -47,6 +55,8 @@ import java.util.List;
 public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnErrorListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener,
 		SeekBar.OnSeekBarChangeListener, OnRangeSeekBarListener, OnProgressVideoListener {
 	
+	private Context context;
+	
 	private static final String TAG = DeepVideoTrimmer.class.getSimpleName();
 	private static final int MIN_TIME_FRAME = 1000;
 	
@@ -67,10 +77,6 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	private int mMaxDuration;
 	private List<OnProgressVideoListener> mListeners;
 	private OnTrimVideoListener mOnTrimVideoListener;
-	/**
-	 * Listener used for thumbnail generation indication to the user to let them know how many are left to be created
-	 */
-	private ThumbnailGeneratingListener thumbnailListener;
 	
 	private int mDuration = 0;
 	private int maxFileSize = 25;
@@ -79,9 +85,18 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	private int mEndPosition = 0;
 	private long mOriginSizeFile;
 	private boolean mResetSeekBar = true;
+	//region Progress Bar Vars
+	
+	/**
+	 * Listener used for thumbnail generation indication to the user to let them know how
+	 * many are left to be created. Link: {@link ThumbnailGeneratingListener}
+	 */
+	private ThumbnailGeneratingListener thumbnailListener;
 	private boolean showProgressBarWhileLoadingBitmaps = true;
 	private boolean shouldProgressBarBeIndeterminate = false;
 	private long animationTimeForThumbnailProgressBar;
+	private int progressBarColor;
+	//endregion
 	
 	@NonNull
 	private final MessageHandler mMessageHandler = new MessageHandler(this);
@@ -131,55 +146,55 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	}
 	
 	private void init(Context context) {
-		
+		this.context = context;
 		LayoutInflater.from(context).inflate(R.layout.view_time_line, this, true);
-		
-		// TODO: 4/26/19 add in option for changing thumbnail listener color
 		this.thumbnailListener = new ThumbnailGeneratingListener() {
 			@Override
 			public void thumbnailGenerated(int whichThumbnail, int totalNumberOfThumbnails) {
-				L.m("thumbnailGenerated. " + whichThumbnail + "/" + totalNumberOfThumbnails);
+				L.m("thumbnail generated " + whichThumbnail + "/" + totalNumberOfThumbnails);
+				if(mTimeLineView == null){
+					return;
+				}
+				if(timeLineProgressBar == null){
+					mTimeLineView.setVisibility(VISIBLE);
+					return;
+				}
+				if(!showProgressBarWhileLoadingBitmaps){
+					timeLineProgressBar.setVisibility(GONE);
+					mTimeLineView.setVisibility(VISIBLE);
+					return;
+				}
 				if(whichThumbnail >= totalNumberOfThumbnails){
-					if(timeLineProgressBar != null){
-						timeLineProgressBar.setVisibility(GONE);
-					}
-					if(mTimeLineView != null){
-						mTimeLineView.setVisibility(VISIBLE);
-					}
+					timeLineProgressBar.setVisibility(GONE);
+					mTimeLineView.setVisibility(VISIBLE);
 				} else {
-					if(mTimeLineView != null){
+					if(DeepVideoTrimmer.this.shouldProgressBarBeIndeterminate){
+						timeLineProgressBar.setIndeterminate(true);
+					} else {
 						mTimeLineView.setVisibility(GONE);
-					}
-					if(timeLineProgressBar != null){
 						timeLineProgressBar.setVisibility(VISIBLE);
 						float x = (float) whichThumbnail;
 						float y = (float) totalNumberOfThumbnails;
 						float z = (100) * ((float)(x / y));
-						//Unused ATM
-//						float previousZ = (100) * ((float)((x-1) / y));
-//						if(previousZ < 0){
-//							previousZ = 0;
-//						}
-						ObjectAnimator objectAnimator = ObjectAnimator.ofInt(timeLineProgressBar, "progress", (int)z);
-						// TODO: 4/26/19 write this in as dynamic? or nah? todo make this indeterminate as an option?
-						objectAnimator.setDuration(750);
+						ObjectAnimator objectAnimator = ObjectAnimator.ofInt(
+								timeLineProgressBar, "progress", (int)z);
+						objectAnimator.setDuration(animationTimeForThumbnailProgressBar);
 						objectAnimator.start();
-//						timeLineProgressBar.setProgress((z > 100) ? 100 : (int)z);
 					}
 				}
 			}
 		};
-		mHolderTopView = findViewById(R.id.handlerTop);
+		this.mHolderTopView = findViewById(R.id.handlerTop);
 		ProgressBarView progressVideoView = findViewById(R.id.timeVideoView);
-		mRangeSeekBarView = findViewById(R.id.timeLineBar);
-		mLinearVideo = findViewById(R.id.layout_surface_view);
-		mVideoView = findViewById(R.id.video_loader);
-		mPlayView = findViewById(R.id.icon_video_play);
-		mTextSize = findViewById(R.id.textSize);
-		mTextTimeFrame = findViewById(R.id.textTimeSelection);
-		mTextTime = findViewById(R.id.textTime);
-		mTimeLineView = findViewById(R.id.timeLineView);
-		timeLineProgressBar = findViewById(R.id.timeLineProgressBar);
+		this.mRangeSeekBarView = findViewById(R.id.timeLineBar);
+		this.mLinearVideo = findViewById(R.id.layout_surface_view);
+		this.mVideoView = findViewById(R.id.video_loader);
+		this.mPlayView = findViewById(R.id.icon_video_play);
+		this.mTextSize = findViewById(R.id.textSize);
+		this.mTextTimeFrame = findViewById(R.id.textTimeSelection);
+		this.mTextTime = findViewById(R.id.textTime);
+		this.mTimeLineView = findViewById(R.id.timeLineView);
+		this.timeLineProgressBar = findViewById(R.id.timeLineProgressBar);
 		View viewButtonCancel = findViewById(R.id.btCancel);
 		View viewButtonSave = findViewById(R.id.btSave);
 		
@@ -236,41 +251,45 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 			);
 		}
 		
-		mListeners = new ArrayList<>();
-		mListeners.add(this);
-		mListeners.add(progressVideoView);
+		this.mListeners = new ArrayList<>();
+		this.mListeners.add(this);
+		this.mListeners.add(progressVideoView);
 		
-		mHolderTopView.setMax(1000);
-		mHolderTopView.setSecondaryProgress(0);
+		this.mHolderTopView.setMax(1000);
+		this.mHolderTopView.setSecondaryProgress(0);
 		
-		mRangeSeekBarView.addOnRangeSeekBarListener(this);
-		mRangeSeekBarView.addOnRangeSeekBarListener(progressVideoView);
+		this.mRangeSeekBarView.addOnRangeSeekBarListener(this);
+		this.mRangeSeekBarView.addOnRangeSeekBarListener(progressVideoView);
 		
-		int marge = mRangeSeekBarView.getThumbs().get(0).getWidthBitmap();
-		int widthSeek = mHolderTopView.getThumb().getMinimumWidth() / 2;
+		int marge = this.mRangeSeekBarView.getThumbs().get(0).getWidthBitmap();
+		int widthSeek = this.mHolderTopView.getThumb().getMinimumWidth() / 2;
 		
-		LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) mHolderTopView.getLayoutParams();
+		LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) this.mHolderTopView.getLayoutParams();
 		lp.setMargins(marge - widthSeek, 0, marge - widthSeek, 0);
-		mHolderTopView.setLayoutParams(lp);
+		this.mHolderTopView.setLayoutParams(lp);
 		
 		lp = (LinearLayout.LayoutParams) mTimeLineView.getLayoutParams();
 		lp.setMargins(marge, 0, marge, 0);
-		mTimeLineView.setLayoutParams(lp);
+		this.mTimeLineView.setLayoutParams(lp);
 		
 		lp = (LinearLayout.LayoutParams) progressVideoView.getLayoutParams();
 		lp.setMargins(marge, 0, marge, 0);
 		progressVideoView.setLayoutParams(lp);
 		
-		mHolderTopView.setOnSeekBarChangeListener(this);
+		this.mHolderTopView.setOnSeekBarChangeListener(this);
 		
-		mVideoView.setOnPreparedListener(this);
-		mVideoView.setOnCompletionListener(this);
-		mVideoView.setOnErrorListener(this);
+		this.mVideoView.setOnPreparedListener(this);
+		this.mVideoView.setOnCompletionListener(this);
+		this.mVideoView.setOnErrorListener(this);
 		
-		mGestureDetector = new GestureDetector(getContext(), mGestureListener);
-		mVideoView.setOnTouchListener(mTouchListener);
+		this.mGestureDetector = new GestureDetector(getContext(), this.mGestureListener);
+		this.mVideoView.setOnTouchListener(mTouchListener);
 		
 		setDefaultDestinationPath();
+		this.setShouldProgressBarBeIndeterminate(false);
+		this.setShowProgressBarWhileLoadingBitmaps(true,
+				500, R.color.colorAccent);
+		this.setProgressBarColor();
 	}
 	
 	@SuppressWarnings("unused")
@@ -380,6 +399,12 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		this.maxFileSize = maxFileSizeInMB;
 	}
 	
+	//region Bitmap Thumbnail Progress Bar Methods
+	
+	/**
+	 * Get whether the progress bar will show during the loading of bitmaps
+	 * @return
+	 */
 	public boolean getShowProgressBarWhileLoadingBitmaps() {
 		return showProgressBarWhileLoadingBitmaps;
 	}
@@ -395,32 +420,43 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	/**
 	 * Should load an animated progress bar while the bitmap (thumbnails) are loading
 	 * @param showProgressBarWhileLoadingBitmaps if true, will show, if false, will not
-	 * @param timeBetweenAnimationLoads Animated time for each bar load. Defaults to 750
+	 * @param timeBetweenAnimationLoads Animated time for each bar load. Defaults to 500
 	 *                                  milliseconds per tick / animated chunk.
 	 */
 	public void setShowProgressBarWhileLoadingBitmaps(boolean showProgressBarWhileLoadingBitmaps, long timeBetweenAnimationLoads) {
-		this.showProgressBarWhileLoadingBitmaps = showProgressBarWhileLoadingBitmaps;
-		this.animationTimeForThumbnailProgressBar = (timeBetweenAnimationLoads < 0) ? 750 : timeBetweenAnimationLoads;
+		this.setShowProgressBarWhileLoadingBitmaps(showProgressBarWhileLoadingBitmaps, timeBetweenAnimationLoads, R.color.colorAccent);
 	}
 	
 	/**
 	 * Should load an animated progress bar while the bitmap (thumbnails) are loading
 	 * @param showProgressBarWhileLoadingBitmaps if true, will show, if false, will not
-	 * @param timeBetweenAnimationLoads Animated time for each bar load. Defaults to 750
+	 * @param timeBetweenAnimationLoads Animated time for each bar load. Defaults to 500
 	 *                                  milliseconds per tick / animated chunk.
-	 * @param progressBarColor int color for the progress bar. Defaults to
-	 *                         {@link R.color#colorAccent} / "#FF0800"
+	 * @param progressBarColorResId int color for the progress bar. Defaults to
+	 *                         {@link R.color#colorAccent} / "#FF0800". Pass the color as the int id.
 	 */
 	public void setShowProgressBarWhileLoadingBitmaps(boolean showProgressBarWhileLoadingBitmaps,
 	                                                  long timeBetweenAnimationLoads,
-	                                                  int progressBarColor) {
+	                                                  int progressBarColorResId) {
 		this.showProgressBarWhileLoadingBitmaps = showProgressBarWhileLoadingBitmaps;
-		this.animationTimeForThumbnailProgressBar = (timeBetweenAnimationLoads < 0) ? 750 : timeBetweenAnimationLoads;
+		this.animationTimeForThumbnailProgressBar = (timeBetweenAnimationLoads < 0)
+				? 500 : timeBetweenAnimationLoads;
 		try {
-		
-		} catch (R)
+			this.progressBarColor = ContextCompat.getColor(this.context, progressBarColorResId);
+		} catch (IllegalArgumentException iae){
+			iae.printStackTrace();
+			this.progressBarColor = progressBarColorResId;
+		} catch (Resources.NotFoundException rnfe){
+			rnfe.printStackTrace();
+			this.progressBarColor = progressBarColorResId;
+		}
+		this.setProgressBarColor();
 	}
 	
+	/**
+	 * Get whether the progress bar should be indeterminate or not. Defaults to false
+	 * @return
+	 */
 	public boolean getShouldProgressBarBeIndeterminate() {
 		return shouldProgressBarBeIndeterminate;
 	}
@@ -432,6 +468,47 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	public void setShouldProgressBarBeIndeterminate(boolean shouldProgressBarBeIndeterminate) {
 		this.shouldProgressBarBeIndeterminate = shouldProgressBarBeIndeterminate;
 	}
+	
+	/**
+	 * Set the Progress Bar Color
+	 */
+	private void setProgressBarColor(){
+		try {
+			this.timeLineProgressBar.getIndeterminateDrawable().setColorFilter(
+					this.progressBarColor,android.graphics.PorterDuff.Mode.MULTIPLY);
+			this.timeLineProgressBar.getProgressDrawable().setColorFilter(
+					this.progressBarColor,android.graphics.PorterDuff.Mode.MULTIPLY);
+			
+			// TODO: 4/29/19 above code workd on indeterminate, check below on determinate
+			LayerDrawable progressBarDrawable = (LayerDrawable) this.timeLineProgressBar.getProgressDrawable();
+			Drawable backgroundDrawable = progressBarDrawable.getDrawable(0);
+			Drawable progressDrawable = progressBarDrawable.getDrawable(1);
+			backgroundDrawable.setColorFilter(this.progressBarColor, PorterDuff.Mode.SRC_IN);
+			progressDrawable.setColorFilter(this.progressBarColor, PorterDuff.Mode.SRC_IN);
+			
+			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//				ColorStateList colorStateList = ColorStateList.valueOf(this.progressBarColor);
+//				this.timeLineProgressBar.setIndeterminateTintList(colorStateList);
+//				this.timeLineProgressBar.setIndeterminateTintMode(PorterDuff.Mode.SRC_IN);
+//				this.timeLineProgressBar.setProgressTintList(colorStateList);
+//				this.timeLineProgressBar.setProgressTintMode(PorterDuff.Mode.SRC_IN);
+//				this.timeLineProgressBar.getIndeterminateDrawable().setColorFilter(
+//						this.progressBarColor, PorterDuff.Mode.SRC_ATOP);
+//				LayerDrawable progressBarDrawable = (LayerDrawable) this.timeLineProgressBar.getProgressDrawable();
+//				Drawable backgroundDrawable = progressBarDrawable.getDrawable(0);
+//				Drawable progressDrawable = progressBarDrawable.getDrawable(1);
+//				backgroundDrawable.setColorFilter(this.progressBarColor, PorterDuff.Mode.SRC_IN);
+//				progressDrawable.setColorFilter(this.progressBarColor, PorterDuff.Mode.SRC_IN);
+			} else {
+//				this.timeLineProgressBar.getIndeterminateDrawable().setColorFilter(
+//						this.progressBarColor, PorterDuff.Mode.SRC_IN);
+			}
+			
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+	}
+	//endregion
 	
 	private void setSeekBarPosition() {
 		
