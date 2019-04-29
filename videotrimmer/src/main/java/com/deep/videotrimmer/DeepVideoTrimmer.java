@@ -79,6 +79,10 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	private int mEndPosition = 0;
 	private long mOriginSizeFile;
 	private boolean mResetSeekBar = true;
+	private boolean showProgressBarWhileLoadingBitmaps = true;
+	private boolean shouldProgressBarBeIndeterminate = false;
+	private long animationTimeForThumbnailProgressBar;
+	
 	@NonNull
 	private final MessageHandler mMessageHandler = new MessageHandler(this);
 	private static final int SHOW_PROGRESS = 2;
@@ -374,6 +378,59 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	 */
 	public void setMaxFileSize(int maxFileSizeInMB) {
 		this.maxFileSize = maxFileSizeInMB;
+	}
+	
+	public boolean getShowProgressBarWhileLoadingBitmaps() {
+		return showProgressBarWhileLoadingBitmaps;
+	}
+	
+	/**
+	 * Should load an animated progress bar while the bitmap (thumbnails) are loading
+	 * @param showProgressBarWhileLoadingBitmaps if true, will show, if false, will not
+	 */
+	public void setShowProgressBarWhileLoadingBitmaps(boolean showProgressBarWhileLoadingBitmaps) {
+		this.setShowProgressBarWhileLoadingBitmaps(showProgressBarWhileLoadingBitmaps, 750);
+	}
+	
+	/**
+	 * Should load an animated progress bar while the bitmap (thumbnails) are loading
+	 * @param showProgressBarWhileLoadingBitmaps if true, will show, if false, will not
+	 * @param timeBetweenAnimationLoads Animated time for each bar load. Defaults to 750
+	 *                                  milliseconds per tick / animated chunk.
+	 */
+	public void setShowProgressBarWhileLoadingBitmaps(boolean showProgressBarWhileLoadingBitmaps, long timeBetweenAnimationLoads) {
+		this.showProgressBarWhileLoadingBitmaps = showProgressBarWhileLoadingBitmaps;
+		this.animationTimeForThumbnailProgressBar = (timeBetweenAnimationLoads < 0) ? 750 : timeBetweenAnimationLoads;
+	}
+	
+	/**
+	 * Should load an animated progress bar while the bitmap (thumbnails) are loading
+	 * @param showProgressBarWhileLoadingBitmaps if true, will show, if false, will not
+	 * @param timeBetweenAnimationLoads Animated time for each bar load. Defaults to 750
+	 *                                  milliseconds per tick / animated chunk.
+	 * @param progressBarColor int color for the progress bar. Defaults to
+	 *                         {@link R.color#colorAccent} / "#FF0800"
+	 */
+	public void setShowProgressBarWhileLoadingBitmaps(boolean showProgressBarWhileLoadingBitmaps,
+	                                                  long timeBetweenAnimationLoads,
+	                                                  int progressBarColor) {
+		this.showProgressBarWhileLoadingBitmaps = showProgressBarWhileLoadingBitmaps;
+		this.animationTimeForThumbnailProgressBar = (timeBetweenAnimationLoads < 0) ? 750 : timeBetweenAnimationLoads;
+		try {
+		
+		} catch (R)
+	}
+	
+	public boolean getShouldProgressBarBeIndeterminate() {
+		return shouldProgressBarBeIndeterminate;
+	}
+	
+	/**
+	 * Sets whether or not the progress bar is indeterminate instead of follows a progression
+	 * @param shouldProgressBarBeIndeterminate
+	 */
+	public void setShouldProgressBarBeIndeterminate(boolean shouldProgressBarBeIndeterminate) {
+		this.shouldProgressBarBeIndeterminate = shouldProgressBarBeIndeterminate;
 	}
 	
 	private void setSeekBarPosition() {
