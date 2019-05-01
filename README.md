@@ -1,3 +1,7 @@
+
+ [![JitPack](https://jitpack.io/v/pgmacdesign/video-trimmer.svg)](https://jitpack.io/#pgmacdesign/video-trimmer)
+
+
 # Screenshots:
 **Screenshot 1 :**
 
@@ -34,8 +38,8 @@ allprojects {
 }
 ```
 
-//Add this to your module level / app level file: 
-   
+//Add this to your module level / app level file:
+
 ```
 implementation 'com.github.PGMacDesign:video-trimmer:1.2.0'
 ```   
