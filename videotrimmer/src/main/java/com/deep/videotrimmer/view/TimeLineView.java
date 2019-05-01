@@ -98,8 +98,6 @@ public class TimeLineView extends View {
 	 * @param viewWidth
 	 */
 	private void getBitmap(final int viewWidth) {
-		L.m("TimeLineView -- getBitmap");
-		// TODO: 4/26/19 update progress bar here with the items being cut
 		BackgroundExecutor.execute(
 				new BackgroundExecutor.Task("", 0L, "") {
 					@Override
@@ -120,18 +118,24 @@ public class TimeLineView extends View {
 							int numThumbs = (int) Math.ceil(((float) viewWidth) / thumbWidth);
 							TimeLineView.this.numberOfThumbnailsToGenerate = numThumbs;
 							final long interval = videoLengthInMs / numThumbs;
-							
+							int numberOfFailedThumbnails = 0;
 							for (int i = 0; i < numThumbs; ++i) {
 								sendPingOnListenerOnUIThread((1+i), numThumbs);
 								Bitmap bitmap = mediaMetadataRetriever.getFrameAtTime(i * interval, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
 								try {
 									bitmap = Bitmap.createScaledBitmap(bitmap, thumbWidth, thumbHeight, false);
+								} catch (NullPointerException npe){
+									numberOfFailedThumbnails++;
 								} catch (Exception e) {
 									e.printStackTrace();
 								}
 								thumbnailList.put(i, bitmap);
 							}
 							sendPingOnListenerOnUIThread(numThumbs, numThumbs);
+							if(numberOfFailedThumbnails >= (numThumbs - 1)){
+								//this means there were almost no thumbnails generated, likely bad video
+								pingBadVideoCallback();
+							}
 							mediaMetadataRetriever.release();
 							returnBitmaps(thumbnailList);
 						} catch (final Throwable e) {
@@ -160,12 +164,27 @@ public class TimeLineView extends View {
 				}, 0L);
 	}
 	
+	/**
+	 * Send a callback on a listener to indicate a bad video
+	 */
+	private void pingBadVideoCallback(){
+		if(this.listener == null){
+			return;
+		}
+		UiThreadExecutor.runTask("",
+				new Runnable() {
+					@Override
+					public void run() {
+						listener.couldNotGenerateThumbnails();
+					}
+				}, 0L);
+	}
+	
 	private void returnBitmaps(final LongSparseArray<Bitmap> thumbnailList) {
 		UiThreadExecutor.runTask("",
 				new Runnable() {
 					@Override
 					public void run() {
-						// TODO: 4/26/19 update here to remove progress bar and update with thumbnails
 						mBitmapList = thumbnailList;
 						invalidate();
 					}

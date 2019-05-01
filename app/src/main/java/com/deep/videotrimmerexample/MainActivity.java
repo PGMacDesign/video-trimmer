@@ -116,6 +116,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     }
 
     private File getFileFromBitmap(Bitmap bmp) {
+        if(bmp == null){
+            return null;
+        }
         /*//create a file to write bitmap data*/
         thumbFile = new File(this.getCacheDir(), "thumb_" + selectedVideoName + ".png");
         try {

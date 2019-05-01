@@ -7,9 +7,11 @@ import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.deep.videotrimmer.DeepVideoTrimmer;
 import com.deep.videotrimmer.interfaces.OnTrimVideoListener;
+import com.deep.videotrimmer.utils.L;
 import com.deep.videotrimmer.view.RangeSeekBarView;
 import com.deep.videotrimmerexample.databinding.ActivityVideoTrimmerBinding;
 
@@ -48,13 +50,43 @@ public class VideoTrimmerActivity extends BaseActivity implements OnTrimVideoLis
 //                    android.R.color.holo_blue_bright,
 //                    null, true);
             mVideoTrimmer.setMaxDuration(100);
+            mVideoTrimmer.setOnTrimVideoListener(new OnTrimVideoListener() {
+                @Override
+                public void invalidVideo() {
+                    Toast.makeText(VideoTrimmerActivity.this, "INVALID VIDEO!", Toast.LENGTH_LONG).show();
+                }
+    
+                @Override
+                public void getResult(Uri uri) {
+                    L.m("Uri == " + uri);
+                }
+    
+                @Override
+                public void cancelAction() {
+                    L.m("Cancel Action");
+                }
+            });
             mVideoTrimmer.setOnTrimVideoListener(this);
             mVideoTrimmer.setVideoURI(Uri.parse(path));
         } else {
             showToastLong(getString(R.string.toast_cannot_retrieve_selected_video));
         }
     }
-
+    
+    @Override
+    public void invalidVideo() {
+        try {
+            this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    L.m("invalidVideo hit @ 82 within Video Trimmer Activity");
+                    Toast.makeText(VideoTrimmerActivity.this,
+                            "Invalid Video Passed!", Toast.LENGTH_LONG).show();
+                }
+            });
+        } catch (Exception e){}
+    }
+    
     @Override
     public void getResult(final Uri uri) {
         runOnUiThread(new Runnable() {

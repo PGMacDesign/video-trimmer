@@ -73,7 +73,15 @@ public class TrimVideoUtils {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     private static void genVideoUsingMp4Parser(@NonNull File src, @NonNull File dst, long startMs, long endMs, @NonNull OnTrimVideoListener callback) throws IOException {
 
-        Movie movie = MovieCreator.build(new FileDataSourceViaHeapImpl(src.getAbsolutePath()));
+        Movie movie = null;
+        try {
+            //todo It's blowing up here at the MovieCreator.build() code.
+            movie = MovieCreator.build(new FileDataSourceViaHeapImpl(src.getAbsolutePath()));
+        } catch (Exception e){
+            callback.invalidVideo();
+            e.printStackTrace();
+            return;
+        }
 
         List<Track> tracks = movie.getTracks();
         movie.setTracks(new LinkedList<Track>());

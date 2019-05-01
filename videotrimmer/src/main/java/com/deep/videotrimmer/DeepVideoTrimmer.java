@@ -50,6 +50,10 @@ import com.deep.videotrimmer.utils.UiThreadExecutor;
 import com.deep.videotrimmer.view.ProgressBarView;
 import com.deep.videotrimmer.view.RangeSeekBarView;
 import com.deep.videotrimmer.view.TimeLineView;
+import com.googlecode.mp4parser.DataSource;
+import com.googlecode.mp4parser.FileDataSourceViaHeapImpl;
+import com.googlecode.mp4parser.authoring.Movie;
+import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
@@ -182,12 +186,25 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 						float x = (float) whichThumbnail;
 						float y = (float) totalNumberOfThumbnails;
 						float z = (100) * ((float)(x / y));
-						ObjectAnimator objectAnimator = ObjectAnimator.ofInt(
-								timeLineProgressBar, "progress", (int)z);
-						objectAnimator.setDuration(animationTimeForThumbnailProgressBar);
-						objectAnimator.start();
+						try {
+							ObjectAnimator objectAnimator = ObjectAnimator.ofInt(
+									timeLineProgressBar, "progress", (int) z);
+							objectAnimator.setDuration(animationTimeForThumbnailProgressBar);
+							objectAnimator.start();
+						} catch (Exception e){
+							timeLineProgressBar.setProgress((int)z);
+						}
 					}
 				}
+			}
+			
+			/**
+			 * If this triggers, problem with all of the thumbnails, trigger callback
+			 */
+			@Override
+			public void couldNotGenerateThumbnails() {
+				L.m("Invalid Video hit within DeepVideo Trimmer");
+				mOnTrimVideoListener.invalidVideo();
 			}
 		};
 		this.mHolderTopView = findViewById(R.id.handlerTop);
@@ -221,6 +238,27 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 						@Override
 						public void onClick(View view) {
 							
+							// TODO: 5/1/19 need to figure out how to utilize this code to call the no data callback as it is sending back result data that is invalid or crashing
+							
+							/*
+									try {
+										L.m("Attempt check @ DeepVideoTrimmer - 255");
+										Movie movie = null;
+										L.m("genVideoUsingMp4Parser - " + 78);
+										String path = file.getAbsolutePath();
+										L.m("genVideoUsingMp4Parser - " + 81);
+										DataSource dataSourceChannel = new FileDataSourceViaHeapImpl(path);
+										L.m("genVideoUsingMp4Parser - " + 83);
+										movie = MovieCreator.build(dataSourceChannel);
+										L.m("genVideoUsingMp4Parser - " + 85);
+									} catch (Exception e){
+										e.printStackTrace();
+									}
+									
+									if(true){
+										return;
+									}
+							 */
 							if (letUserProceed) {
 								if (mStartPosition <= 0 && mEndPosition >= mDuration) {
 									mOnTrimVideoListener.getResult(mSrc);
@@ -358,13 +396,18 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	
 	@Override
 	public void onPrepared(@NonNull MediaPlayer mp) {
+		L.m("OnPrepared hit");
  /*        Adjust the size of the video
          so it fits on the screen*/
 		int videoWidth = mp.getVideoWidth();
+		L.m("screenHeight " + videoWidth);
 		int videoHeight = mp.getVideoHeight();
+		L.m("screenHeight " + videoHeight);
 		float videoProportion = (float) videoWidth / (float) videoHeight;
 		int screenWidth = mLinearVideo.getWidth();
+		L.m("screenHeight " + screenWidth);
 		int screenHeight = mLinearVideo.getHeight();
+		L.m("screenHeight " + screenHeight);
 		float screenProportion = (float) screenWidth / (float) screenHeight;
 		ViewGroup.LayoutParams lp = mVideoView.getLayoutParams();
 		
@@ -380,11 +423,16 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		mPlayView.setVisibility(View.VISIBLE);
 		
 		mDuration = mVideoView.getDuration();
+		L.m("mDuration == " + mDuration);
 		setSeekBarPosition();
 		getSizeFile(false);
 		setTimeFrames();
 		setTimeVideo(0);
 		letUserProceed = getCroppedFileSize() < maxFileSize;
+		L.m("initial length  == " + initialLength);
+		if(initialLength <= 0){
+			this.mOnTrimVideoListener.invalidVideo();
+		}
 	}
 	
 	/**
@@ -714,7 +762,10 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		initialLength = ((mEndPosition - mStartPosition) / 1000);
 	}
 	
-	private void startTrimVideo(@NonNull final File file, @NonNull final String dst, final int startVideo, final int endVideo, @NonNull final OnTrimVideoListener callback) {
+	private void startTrimVideo(@NonNull final File file, @NonNull final String dst,
+	                            final int startVideo, final int endVideo,
+	                            @NonNull final OnTrimVideoListener callback) {
+		
 		BackgroundExecutor.execute(
 				new BackgroundExecutor.Task("", 0L, "") {
 					@Override
@@ -798,6 +849,7 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	}
 	
 	private void getSizeFile(boolean isChanged) {
+		L.m("getFile Size. Is changed? " + isChanged);
 		if (isChanged) {
 			long initSize = getFileSize();
 			long newSize;
@@ -806,7 +858,7 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		} else {
 			if (mOriginSizeFile == 0) {
 				File file = new File(mSrc.getPath());
-				
+				L.m("mOriginSizeFile == " + mOriginSizeFile);
 				mOriginSizeFile = file.length();
 				long fileSizeInKB = mOriginSizeFile / 1024;
 				
@@ -816,6 +868,7 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 				} else {
 					mTextSize.setText(String.format("%s %s", fileSizeInKB, getContext().getString(R.string.kilobyte)));
 				}
+				L.m("fileSizeInKB == " + fileSizeInKB);
 			}
 		}
 	}
@@ -831,6 +884,9 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	private long getCroppedFileSize() {
 		long initSize = getFileSize();
 		long newSize;
+		if(initialLength <= 0){
+			return 0;
+		}
 		newSize = ((initSize / initialLength) * (mEndPosition - mStartPosition));
 		return newSize / 1024;
 	}
@@ -884,7 +940,10 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	}
 	
 	private void updateProgress(boolean all) {
-		if (mDuration == 0) return;
+		if (mDuration <= 0) {
+			L.m("Duration == 0");
+			return;
+		}
 		
 		int position = mVideoView.getCurrentPosition();
 		if (all) {
