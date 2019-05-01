@@ -130,7 +130,12 @@ public class TrimVideoUtils {
             dst.createNewFile();
         }
         LoggingCore.setShouldLog(true);
-        Container out = new DefaultMp4Builder().build(movie, null);
+        Container out = new DefaultMp4Builder().build(movie, new DefaultMp4Builder.Mp4TrimmerTimeCallback() {
+            @Override
+            public void chunkWritten(long l, long l1, float v) {
+                L.m("written " + l + "," + " out of " + l1 + ", % total: " + v);
+            }
+        });
         
         FileOutputStream fos = new FileOutputStream(dst);
         FileChannel fc = fos.getChannel();

@@ -4,6 +4,7 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
@@ -39,6 +40,7 @@ import com.deep.videotrimmer.interfaces.OnRangeSeekBarListener;
 import com.deep.videotrimmer.interfaces.OnTrimVideoListener;
 import com.deep.videotrimmer.interfaces.ThumbnailGeneratingListener;
 import com.deep.videotrimmer.utils.BackgroundExecutor;
+import com.deep.videotrimmer.utils.ImageUtils;
 import com.deep.videotrimmer.utils.L;
 import com.deep.videotrimmer.utils.TrimVideoUtils;
 import com.deep.videotrimmer.utils.UiThreadExecutor;
@@ -52,7 +54,8 @@ import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.List;
 
-public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnErrorListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener,
+public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnErrorListener,
+		MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener,
 		SeekBar.OnSeekBarChangeListener, OnRangeSeekBarListener, OnProgressVideoListener {
 	
 	private Context context;
@@ -151,7 +154,6 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		this.thumbnailListener = new ThumbnailGeneratingListener() {
 			@Override
 			public void thumbnailGenerated(int whichThumbnail, int totalNumberOfThumbnails) {
-				L.m("thumbnail generated " + whichThumbnail + "/" + totalNumberOfThumbnails);
 				if(mTimeLineView == null){
 					return;
 				}
@@ -398,6 +400,108 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	public void setMaxFileSize(int maxFileSizeInMB) {
 		this.maxFileSize = maxFileSizeInMB;
 	}
+	
+	//region Custom Drawable Setting Methods
+	
+	//region Top Seek Bar Drawable
+	/**
+	 * Set the top seek bar thumb drawable.
+	 * This will override the existing one and set whatever is passed
+	 * @param drawable
+	 */
+	public void setTopSeekBarThumbDrawable(@NonNull Drawable drawable){
+		if(drawable == null){
+			return;
+		}
+		try {
+			this.mHolderTopView.setThumb(drawable);
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+//	/**
+//	 * Set the top seek bar thumb drawable color.
+//	 * This will use the existing drawable.
+//	 * {@link R.drawable#text_select_handle_middle}
+//	 * @param colorResId
+//	 */
+//	public void setTopSeekBarThumbDrawableColor(int colorResId){
+//		int color = -1;
+//		try {
+//			color = ContextCompat.getColor(this.context, colorResId);
+//		} catch (Resources.NotFoundException e){
+//			color = colorResId;
+//		}
+//		Drawable d = null;
+//		try {
+//			d = ContextCompat.getDrawable(this.context, R.drawable.text_select_handle_middle).mutate();
+//			d.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+//			this.mHolderTopView.setThumb(d);
+//			return;
+//		} catch (Exception e){
+//			e.printStackTrace();
+//		}
+//		try {
+//			d = this.getResources().getDrawable(R.drawable.text_select_handle_middle).mutate();
+//			d.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+//			this.mHolderTopView.setThumb(d);
+//			return;
+//		} catch (Exception e){
+//			e.printStackTrace();
+//		}
+//	}
+	//endregion
+	
+	//region Bottom Left (Start) and Right (End) Trimmer Drawables
+	
+	/**
+	 * Set the bottom left and right seek bar thumb drawables.
+	 * This will override the existing one and set whatever is passed
+	 * @param dLeft
+	 * @param dRight
+	 */
+	public void setBottomLeftAndRightSeekBarThumbDrawable(@NonNull Drawable dLeft, @NonNull Drawable dRight){
+		try {
+			this.mRangeSeekBarView.initThumbsCustom(dLeft, dRight);
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Set the top seek bar thumb drawable color.
+	 * This will use the existing drawable.
+	 * {@link R.drawable#text_select_handle_middle}
+	 * @param colorResId
+	 */
+	public void setBottomLeftAndRightSeekBarThumbDrawableColor(int colorResId){
+		int color = -1;
+		try {
+			color = ContextCompat.getColor(this.context, colorResId);
+		} catch (Resources.NotFoundException e){
+			e.printStackTrace();
+			color = colorResId;
+		}
+		Drawable dLeft = null, dRight = null;
+		try {
+			dLeft = this.getResources().getDrawable(R.drawable.text_select_handle_left).mutate();
+			dLeft.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+		try {
+			dRight = ContextCompat.getDrawable(this.context, R.drawable.select_handle_right).mutate();
+			dRight.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+		if(dLeft != null && dRight != null){
+			this.mRangeSeekBarView.initThumbsCustom(dLeft, dRight);
+		} else {
+		}
+	}
+	//endregion
 	
 	//region Bitmap Thumbnail Progress Bar Methods
 	

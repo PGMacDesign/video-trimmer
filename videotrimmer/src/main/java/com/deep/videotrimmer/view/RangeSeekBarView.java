@@ -27,6 +27,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
@@ -35,6 +36,7 @@ import android.view.View;
 
 import com.deep.videotrimmer.R;
 import com.deep.videotrimmer.interfaces.OnRangeSeekBarListener;
+import com.deep.videotrimmer.utils.L;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,28 +73,37 @@ public class RangeSeekBarView extends View {
         init();
     }
 
-    private void init() {
-        mThumbs = Thumb.initThumbs(getResources());
+    private void initThumbsAfterInitialInit(){
         mThumbWidth = Thumb.getWidthBitmap(mThumbs);
         mThumbHeight = Thumb.getHeightBitmap(mThumbs);
-
+    
         mScaleRangeMax = 100;
         mHeightTimeLine = getContext().getResources().getDimensionPixelOffset(R.dimen.frames_video_height);
-
+    
         setFocusable(true);
         setFocusableInTouchMode(true);
-
+    
         mFirstRun = true;
-
+    
         int shadowColor = ContextCompat.getColor(getContext(), R.color.shadow_color);
         mShadow.setAntiAlias(true);
         mShadow.setColor(shadowColor);
         mShadow.setAlpha(177);
-
+    
         int lineColor = ContextCompat.getColor(getContext(), R.color.line_color);
         mLine.setAntiAlias(true);
         mLine.setColor(lineColor);
         mLine.setAlpha(200);
+    }
+    
+    public void initThumbsCustom(Drawable drawableLeft, Drawable drawableRight){
+        this.mThumbs = Thumb.initThumbsCustom(getResources(), drawableLeft, drawableRight);
+        this.initThumbsAfterInitialInit();
+    }
+    
+    private void init() {
+        mThumbs = Thumb.initThumbs(getResources());
+        this.initThumbsAfterInitialInit();
     }
 
     public void initMaxWidth() {

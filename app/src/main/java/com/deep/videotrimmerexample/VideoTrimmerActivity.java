@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.widget.TextView;
 
@@ -38,6 +39,9 @@ public class VideoTrimmerActivity extends BaseActivity implements OnTrimVideoLis
         tvCroppingMessage = (TextView) findViewById(R.id.tvCroppingMessage);
 
         if (mVideoTrimmer != null && path != null) {
+//            mVideoTrimmer.setBottomLeftAndRightSeekBarThumbDrawable(
+//                    ContextCompat.getDrawable(this, R.drawable.ic_launcher_background),
+//                    ContextCompat.getDrawable(this, R.drawable.ic_launcher_background));
             mVideoTrimmer.setMaxDuration(100);
             mVideoTrimmer.setOnTrimVideoListener(this);
             mVideoTrimmer.setVideoURI(Uri.parse(path));
