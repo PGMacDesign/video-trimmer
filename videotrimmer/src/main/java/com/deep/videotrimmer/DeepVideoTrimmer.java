@@ -17,7 +17,9 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
+import android.text.method.TransformationMethod;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -25,6 +27,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -73,6 +76,7 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	private TextView mTextTime;
 	private TimeLineView mTimeLineView;
 	private ProgressBar timeLineProgressBar;
+	private Button viewButtonCancel, viewButtonSave;
 	
 	private Uri mSrc;
 	private String mFinalPath;
@@ -197,8 +201,8 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		this.mTextTime = findViewById(R.id.textTime);
 		this.mTimeLineView = findViewById(R.id.timeLineView);
 		this.timeLineProgressBar = findViewById(R.id.timeLineProgressBar);
-		View viewButtonCancel = findViewById(R.id.btCancel);
-		View viewButtonSave = findViewById(R.id.btSave);
+		viewButtonCancel = findViewById(R.id.btCancel);
+		viewButtonSave = findViewById(R.id.btSave);
 		
 		if (viewButtonCancel != null) {
 			viewButtonCancel.setOnClickListener(
@@ -400,6 +404,79 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	public void setMaxFileSize(int maxFileSizeInMB) {
 		this.maxFileSize = maxFileSizeInMB;
 	}
+	
+	//region Custom Button Settings
+	
+	/**
+	 * Set the button Details since they currently cannot be touched
+	 * @param isSaveButton boolean, if true, these params will affect the 'save button',
+	 *                     if false, these params will affect the 'cancel button'.
+	 * @param text Text to set. If null, ignored and default it used
+	 * @param backgroundColor Background color to set. If null, ignored and default it used
+	 * @param textColor Text color to set. If null, ignored and default it used
+	 * @param buttonBackgroundDrawable {@link Drawable} Background drawable for the button.
+	 *                                                  If null, ignored and default it used
+	 * @param useNullTransformationMethod If true, will call
+	 *                                    {@link Button#setTransformationMethod(TransformationMethod)}
+	 *                                    with a null passed in. The purpose of this is to change the
+	 *                                    text from all uppercase to match the actual text passed in
+	 *                                    (case included). If null, ignored and default it used of
+	 *                                    all capital letters for the text.
+	 */
+	public void setButtonDetails(boolean isSaveButton,
+	                             @Nullable String text,
+	                             @Nullable Integer backgroundColor,
+	                             @Nullable Integer textColor,
+	                             @Nullable Drawable buttonBackgroundDrawable,
+	                             @Nullable Boolean useNullTransformationMethod){
+		Button btn = (isSaveButton) ? this.viewButtonSave : this.viewButtonCancel;
+		if(backgroundColor != null){
+			try {
+				int background;
+				try {
+					background = ContextCompat.getColor(this.context, backgroundColor);
+				} catch (Resources.NotFoundException nfe){
+					background = backgroundColor;
+				}
+				btn.setBackgroundColor(background);
+			} catch (Exception e){
+				e.printStackTrace();
+			}
+		}
+		if(textColor != null){
+			try {
+				int textCol;
+				try {
+					textCol = ContextCompat.getColor(this.context, textColor);
+				} catch (Resources.NotFoundException nfe){
+					textCol = textColor;
+				}
+				btn.setTextColor(textCol);
+			} catch (Exception e){
+				e.printStackTrace();
+			}
+		}
+		if(buttonBackgroundDrawable != null){
+			try {
+				btn.setBackground(buttonBackgroundDrawable);
+			} catch (Exception e){
+				e.printStackTrace();
+			}
+		}
+		if(text != null){
+			try {
+				btn.setText(text);
+			} catch (Exception e){
+				e.printStackTrace();
+			}
+		}
+		if(useNullTransformationMethod != null) {
+			if(useNullTransformationMethod) {
+				btn.setTransformationMethod(null);
+			}
+		}
+	}
+	//endregion
 	
 	//region Custom Drawable Setting Methods
 	

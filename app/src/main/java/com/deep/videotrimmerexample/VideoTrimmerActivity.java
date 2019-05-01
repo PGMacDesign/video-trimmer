@@ -39,9 +39,14 @@ public class VideoTrimmerActivity extends BaseActivity implements OnTrimVideoLis
         tvCroppingMessage = (TextView) findViewById(R.id.tvCroppingMessage);
 
         if (mVideoTrimmer != null && path != null) {
+            //Setting the bottom left and right seek bar drawables
 //            mVideoTrimmer.setBottomLeftAndRightSeekBarThumbDrawable(
 //                    ContextCompat.getDrawable(this, R.drawable.ic_launcher_background),
 //                    ContextCompat.getDrawable(this, R.drawable.ic_launcher_background));
+            //Setting the button details (text, color, etc)
+//            mVideoTrimmer.setButtonDetails(true, "s Yo", R.color.line_color,
+//                    android.R.color.holo_blue_bright,
+//                    null, true);
             mVideoTrimmer.setMaxDuration(100);
             mVideoTrimmer.setOnTrimVideoListener(this);
             mVideoTrimmer.setVideoURI(Uri.parse(path));
