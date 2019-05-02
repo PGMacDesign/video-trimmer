@@ -25,7 +25,7 @@ Whatsapp like video trimmer to trim videos within a defined file size.
 
 **Gradle :**
 
-//Add This to your top level gradle file:
+Add This to your top level gradle file:
 
 ```
 allprojects {
@@ -38,10 +38,10 @@ allprojects {
 }
 ```
 
-//Add this to your module level / app level file:
+Add this to your module level / app level file:
 
 ```
-implementation 'com.github.PGMacDesign:video-trimmer:1.2.0'
+implementation 'com.github.PGMacDesign:video-trimmer:1.2.1'
 ```   
 
 >**Note:** If you have jCenter() added, then no need to write maven dependancy. only using implementation line it will be integrated.
@@ -54,6 +54,30 @@ implementation 'com.github.PGMacDesign:video-trimmer:1.2.0'
           android:layout_height="match_parent" />
 
 # **Customization Settings :**
+
+Customize the 'Save' and 'Cancel' buttons to your heart's content:
+**setButtonDetails(boolean isSaveButton,
+                   @Nullable String text,
+                   @Nullable Integer backgroundColor,
+                   @Nullable Integer textColor,
+                   @Nullable Drawable buttonBackgroundDrawable,
+                   @Nullable Boolean useNullTransformationMethod);**
+                   
+Customize the Top Seek bar Drawable or color of the default one:
+
+**setTopSeekBarThumbDrawable(Drawable)**
+**setTopSeekBarThumbDrawableColor(colorResId)**                  
+
+Customize the Drawables used for the Start and End Video Trim images:
+**setBottomLeftAndRightSeekBarThumbDrawable(Drawable dLeft, Drawable dRight)**
+
+Customize the Progress loading bar when loading Bitmap Thumbnails, the length of time for each animation load, and the color of the progress bar:
+**setShowProgressBarWhileLoadingBitmaps(showProgressBarWhileLoadingBitmaps)**
+**setShowProgressBarWhileLoadingBitmaps(showProgressBarWhileLoadingBitmaps, timeBetweenAnimationLoads)**
+**setShowProgressBarWhileLoadingBitmaps(showProgressBarWhileLoadingBitmaps, timeBetweenAnimationLoads, progressBarColorResId)**
+
+Customize whether the Progress loading bar when loading Bitmap Thumbnails should be indeterminate or not:
+**setShouldProgressBarBeIndeterminate(boolean)**
 
 Mention your own path to save trimmed videos:
 **setDestinationPath(StringPath);**

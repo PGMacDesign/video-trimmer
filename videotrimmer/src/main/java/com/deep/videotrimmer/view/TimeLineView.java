@@ -37,7 +37,6 @@ import android.widget.ProgressBar;
 import com.deep.videotrimmer.R;
 import com.deep.videotrimmer.interfaces.ThumbnailGeneratingListener;
 import com.deep.videotrimmer.utils.BackgroundExecutor;
-import com.deep.videotrimmer.utils.L;
 import com.deep.videotrimmer.utils.UiThreadExecutor;
 
 /**

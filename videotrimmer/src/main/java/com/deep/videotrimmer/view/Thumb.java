@@ -34,7 +34,6 @@ import android.support.v4.content.ContextCompat;
 
 import com.deep.videotrimmer.R;
 import com.deep.videotrimmer.utils.ImageUtils;
-import com.deep.videotrimmer.utils.L;
 
 import java.util.List;
 import java.util.Vector;
@@ -131,14 +130,12 @@ public class Thumb {
                 if (i == 0) {
                     Bitmap b = ImageUtils.convertDrawableToBitmap(drawableLeft);
                     if(b == null){
-                        L.m("Bitmap is null (LEFT), going back to default");
                         return initThumbs(resources);
                     }
                     th.setBitmap(b);
                 } else {
                     Bitmap b = ImageUtils.convertDrawableToBitmap(drawableRight);
                     if(b == null){
-                        L.m("Bitmap is null (RIGHT), going back to default");
                         return initThumbs(resources);
                     }
                     th.setBitmap(b);
@@ -146,12 +143,10 @@ public class Thumb {
         
                 thumbs.add(th);
             }
-            L.m("Successfully updated thumbs! @149");
             return thumbs;
         } catch (Exception e){
             e.printStackTrace();
         }
-        L.m("did not successfully update thumbs! @154");
         return Thumb.initThumbs(resources);
     }
 

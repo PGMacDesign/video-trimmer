@@ -44,7 +44,6 @@ import com.deep.videotrimmer.interfaces.OnTrimVideoListener;
 import com.deep.videotrimmer.interfaces.ThumbnailGeneratingListener;
 import com.deep.videotrimmer.utils.BackgroundExecutor;
 import com.deep.videotrimmer.utils.ImageUtils;
-import com.deep.videotrimmer.utils.L;
 import com.deep.videotrimmer.utils.TrimVideoUtils;
 import com.deep.videotrimmer.utils.UiThreadExecutor;
 import com.deep.videotrimmer.view.ProgressBarView;
@@ -89,12 +88,14 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	private List<OnProgressVideoListener> mListeners;
 	private OnTrimVideoListener mOnTrimVideoListener;
 	
+	private long minimumViableVideoSizeInKb = 250;
 	private int mDuration = 0;
 	private int maxFileSize = 25;
 	private int mTimeVideo = 0;
 	private int mStartPosition = 0;
 	private int mEndPosition = 0;
 	private long mOriginSizeFile;
+	private long mFileSizeInKB = 0;
 	private boolean mResetSeekBar = true;
 	//region Progress Bar Vars
 	
@@ -203,7 +204,6 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 			 */
 			@Override
 			public void couldNotGenerateThumbnails() {
-				L.m("Invalid Video hit within DeepVideo Trimmer");
 				mOnTrimVideoListener.invalidVideo();
 			}
 		};
@@ -238,27 +238,15 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 						@Override
 						public void onClick(View view) {
 							
-							// TODO: 5/1/19 need to figure out how to utilize this code to call the no data callback as it is sending back result data that is invalid or crashing
-							
-							/*
-									try {
-										L.m("Attempt check @ DeepVideoTrimmer - 255");
-										Movie movie = null;
-										L.m("genVideoUsingMp4Parser - " + 78);
-										String path = file.getAbsolutePath();
-										L.m("genVideoUsingMp4Parser - " + 81);
-										DataSource dataSourceChannel = new FileDataSourceViaHeapImpl(path);
-										L.m("genVideoUsingMp4Parser - " + 83);
-										movie = MovieCreator.build(dataSourceChannel);
-										L.m("genVideoUsingMp4Parser - " + 85);
-									} catch (Exception e){
-										e.printStackTrace();
-									}
-									
-									if(true){
-										return;
-									}
-							 */
+							if((getFileSizeInKB() < minimumViableVideoSizeInKb)){
+								mOnTrimVideoListener.invalidVideo();
+								try {
+									Toast.makeText(getContext(), "Your video was invalid, please select a different video", Toast.LENGTH_SHORT).show();
+								} catch (Exception e) {
+									//May trigger if done on background thread
+								}
+								return;
+							}
 							if (letUserProceed) {
 								if (mStartPosition <= 0 && mEndPosition >= mDuration) {
 									mOnTrimVideoListener.getResult(mSrc);
@@ -284,7 +272,7 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 								}
 							} else {
 								try {
-									Toast.makeText(getContext(), "Please trim your video less than 25MB of size", Toast.LENGTH_SHORT).show();
+									Toast.makeText(getContext(), "Please trim your video less than " + maxFileSize + "MB " + " of size", Toast.LENGTH_SHORT).show();
 								} catch (Exception e) {
 									//May trigger if done on background thread
 								}
@@ -396,18 +384,13 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	
 	@Override
 	public void onPrepared(@NonNull MediaPlayer mp) {
-		L.m("OnPrepared hit");
  /*        Adjust the size of the video
          so it fits on the screen*/
 		int videoWidth = mp.getVideoWidth();
-		L.m("screenHeight " + videoWidth);
 		int videoHeight = mp.getVideoHeight();
-		L.m("screenHeight " + videoHeight);
 		float videoProportion = (float) videoWidth / (float) videoHeight;
 		int screenWidth = mLinearVideo.getWidth();
-		L.m("screenHeight " + screenWidth);
 		int screenHeight = mLinearVideo.getHeight();
-		L.m("screenHeight " + screenHeight);
 		float screenProportion = (float) screenWidth / (float) screenHeight;
 		ViewGroup.LayoutParams lp = mVideoView.getLayoutParams();
 		
@@ -423,14 +406,15 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		mPlayView.setVisibility(View.VISIBLE);
 		
 		mDuration = mVideoView.getDuration();
-		L.m("mDuration == " + mDuration);
 		setSeekBarPosition();
 		getSizeFile(false);
 		setTimeFrames();
 		setTimeVideo(0);
-		letUserProceed = getCroppedFileSize() < maxFileSize;
-		L.m("initial length  == " + initialLength);
-		if(initialLength <= 0){
+		long croppedFileSize = getCroppedFileSize();
+		
+		letUserProceed = croppedFileSize < maxFileSize;
+		long sizeInKB = getFileSizeInKB();
+		if(initialLength <= 0 || (sizeInKB < this.minimumViableVideoSizeInKb)){
 			this.mOnTrimVideoListener.invalidVideo();
 		}
 	}
@@ -451,6 +435,28 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	 */
 	public void setMaxFileSize(int maxFileSizeInMB) {
 		this.maxFileSize = maxFileSizeInMB;
+	}
+	
+	/**
+	 * The minimum viable video size in KB
+	 * @return long
+	 */
+	public long getMinimumViableVideoSizeInKb() {
+		return minimumViableVideoSizeInKb;
+	}
+	
+	/**
+	 * This is the minimum viable size in kb to use for trimming. Often times a video is too small
+	 * to be used and can cause problems when trying to cut. This is often the result of bad video formats
+	 * or things being converted to videos incorrectly. This will default to 250 KB, if you want to
+	 * ignore this param, just set this to zero and it will be ignored. Otherwise, if the video size
+	 * is initially less than the amount set here, it will ping the error callback:
+	 * {@link OnTrimVideoListener#invalidVideo()}
+	 * @param minimumViableVideoSizeInKb Minimum size in kilobytes that the INITIAL video should
+	 *                                   be in order to be read / parsed
+	 */
+	public void setMinimumViableVideoSizeInKb(long minimumViableVideoSizeInKb) {
+		this.minimumViableVideoSizeInKb = minimumViableVideoSizeInKb;
 	}
 	
 	//region Custom Button Settings
@@ -545,37 +551,37 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		}
 	}
 	
-//	/**
-//	 * Set the top seek bar thumb drawable color.
-//	 * This will use the existing drawable.
-//	 * {@link R.drawable#text_select_handle_middle}
-//	 * @param colorResId
-//	 */
-//	public void setTopSeekBarThumbDrawableColor(int colorResId){
-//		int color = -1;
-//		try {
-//			color = ContextCompat.getColor(this.context, colorResId);
-//		} catch (Resources.NotFoundException e){
-//			color = colorResId;
-//		}
-//		Drawable d = null;
-//		try {
-//			d = ContextCompat.getDrawable(this.context, R.drawable.text_select_handle_middle).mutate();
-//			d.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-//			this.mHolderTopView.setThumb(d);
-//			return;
-//		} catch (Exception e){
-//			e.printStackTrace();
-//		}
-//		try {
-//			d = this.getResources().getDrawable(R.drawable.text_select_handle_middle).mutate();
-//			d.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-//			this.mHolderTopView.setThumb(d);
-//			return;
-//		} catch (Exception e){
-//			e.printStackTrace();
-//		}
-//	}
+	/**
+	 * Set the top seek bar thumb drawable color.
+	 * This will use the existing drawable.
+	 * {@link R.drawable#text_select_handle_middle}
+	 * @param colorResId
+	 */
+	public void setTopSeekBarThumbDrawableColor(int colorResId){
+		int color = -1;
+		try {
+			color = ContextCompat.getColor(this.context, colorResId);
+		} catch (Resources.NotFoundException e){
+			color = colorResId;
+		}
+		Drawable d = null;
+		try {
+			d = ContextCompat.getDrawable(this.context, R.drawable.text_select_handle_middle).mutate();
+			d.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+			this.mHolderTopView.setThumb(d);
+			return;
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+		try {
+			d = this.getResources().getDrawable(R.drawable.text_select_handle_middle).mutate();
+			d.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+			this.mHolderTopView.setThumb(d);
+			return;
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+	}
 	//endregion
 	
 	//region Bottom Left (Start) and Right (End) Trimmer Drawables
@@ -594,38 +600,38 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		}
 	}
 	
-	/**
-	 * Set the top seek bar thumb drawable color.
-	 * This will use the existing drawable.
-	 * {@link R.drawable#text_select_handle_middle}
-	 * @param colorResId
-	 */
-	public void setBottomLeftAndRightSeekBarThumbDrawableColor(int colorResId){
-		int color = -1;
-		try {
-			color = ContextCompat.getColor(this.context, colorResId);
-		} catch (Resources.NotFoundException e){
-			e.printStackTrace();
-			color = colorResId;
-		}
-		Drawable dLeft = null, dRight = null;
-		try {
-			dLeft = this.getResources().getDrawable(R.drawable.text_select_handle_left).mutate();
-			dLeft.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-		} catch (Exception e){
-			e.printStackTrace();
-		}
-		try {
-			dRight = ContextCompat.getDrawable(this.context, R.drawable.select_handle_right).mutate();
-			dRight.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-		} catch (Exception e){
-			e.printStackTrace();
-		}
-		if(dLeft != null && dRight != null){
-			this.mRangeSeekBarView.initThumbsCustom(dLeft, dRight);
-		} else {
-		}
-	}
+//	/**
+//	 * Set the top seek bar thumb drawable color.
+//	 * This will use the existing drawable.
+//	 * {@link R.drawable#text_select_handle_middle}
+//	 * @param colorResId
+//	 */
+//	public void setBottomLeftAndRightSeekBarThumbDrawableColor(int colorResId){
+//		int color = -1;
+//		try {
+//			color = ContextCompat.getColor(this.context, colorResId);
+//		} catch (Resources.NotFoundException e){
+//			e.printStackTrace();
+//			color = colorResId;
+//		}
+//		Drawable dLeft = null, dRight = null;
+//		try {
+//			dLeft = this.getResources().getDrawable(R.drawable.text_select_handle_left).mutate();
+//			dLeft.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+//		} catch (Exception e){
+//			e.printStackTrace();
+//		}
+//		try {
+//			dRight = ContextCompat.getDrawable(this.context, R.drawable.select_handle_right).mutate();
+//			dRight.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+//		} catch (Exception e){
+//			e.printStackTrace();
+//		}
+//		if(dLeft != null && dRight != null){
+//			this.mRangeSeekBarView.initThumbsCustom(dLeft, dRight);
+//		} else {
+//		}
+//	}
 	//endregion
 	
 	//region Bitmap Thumbnail Progress Bar Methods
@@ -849,7 +855,6 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	}
 	
 	private void getSizeFile(boolean isChanged) {
-		L.m("getFile Size. Is changed? " + isChanged);
 		if (isChanged) {
 			long initSize = getFileSize();
 			long newSize;
@@ -858,27 +863,29 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		} else {
 			if (mOriginSizeFile == 0) {
 				File file = new File(mSrc.getPath());
-				L.m("mOriginSizeFile == " + mOriginSizeFile);
 				mOriginSizeFile = file.length();
-				long fileSizeInKB = mOriginSizeFile / 1024;
-				
-				if (fileSizeInKB > 1000) {
-					long fileSizeInMB = fileSizeInKB / 1024;
+				mFileSizeInKB = mOriginSizeFile / 1024;
+				if (mFileSizeInKB > 1000) {
+					long fileSizeInMB = mFileSizeInKB / 1024;
 					mTextSize.setText(String.format("%s %s", fileSizeInMB, getContext().getString(R.string.megabyte)));
 				} else {
-					mTextSize.setText(String.format("%s %s", fileSizeInKB, getContext().getString(R.string.kilobyte)));
+					mTextSize.setText(String.format("%s %s", mFileSizeInKB, getContext().getString(R.string.kilobyte)));
 				}
-				L.m("fileSizeInKB == " + fileSizeInKB);
 			}
 		}
 	}
 	
 	private long getFileSize() {
+		long fileSizeInKB = getFileSizeInKB();
+		return fileSizeInKB / 1024;
+	}
+	
+	private long getFileSizeInKB() {
 		File file = new File(mSrc.getPath());
 		mOriginSizeFile = file.length();
 		long fileSizeInKB = mOriginSizeFile / 1024;
 		
-		return fileSizeInKB / 1024;
+		return fileSizeInKB;
 	}
 	
 	private long getCroppedFileSize() {
@@ -941,7 +948,6 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	
 	private void updateProgress(boolean all) {
 		if (mDuration <= 0) {
-			L.m("Duration == 0");
 			return;
 		}
 		

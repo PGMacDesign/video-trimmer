@@ -11,7 +11,6 @@ import android.widget.Toast;
 
 import com.deep.videotrimmer.DeepVideoTrimmer;
 import com.deep.videotrimmer.interfaces.OnTrimVideoListener;
-import com.deep.videotrimmer.utils.L;
 import com.deep.videotrimmer.view.RangeSeekBarView;
 import com.deep.videotrimmerexample.databinding.ActivityVideoTrimmerBinding;
 
@@ -58,12 +57,12 @@ public class VideoTrimmerActivity extends BaseActivity implements OnTrimVideoLis
     
                 @Override
                 public void getResult(Uri uri) {
-                    L.m("Uri == " + uri);
+                    //Do stuff here with the result
                 }
     
                 @Override
                 public void cancelAction() {
-                    L.m("Cancel Action");
+                    //Do stuff here to cancel
                 }
             });
             mVideoTrimmer.setOnTrimVideoListener(this);
@@ -79,7 +78,6 @@ public class VideoTrimmerActivity extends BaseActivity implements OnTrimVideoLis
             this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    L.m("invalidVideo hit @ 82 within Video Trimmer Activity");
                     Toast.makeText(VideoTrimmerActivity.this,
                             "Invalid Video Passed!", Toast.LENGTH_LONG).show();
                 }

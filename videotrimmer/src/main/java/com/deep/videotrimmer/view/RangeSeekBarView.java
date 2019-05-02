@@ -36,7 +36,6 @@ import android.view.View;
 
 import com.deep.videotrimmer.R;
 import com.deep.videotrimmer.interfaces.OnRangeSeekBarListener;
-import com.deep.videotrimmer.utils.L;
 
 import java.util.ArrayList;
 import java.util.List;
