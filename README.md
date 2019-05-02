@@ -56,40 +56,66 @@ implementation 'com.github.PGMacDesign:video-trimmer:1.2.1'
 # **Customization Settings :**
 
 Customize the 'Save' and 'Cancel' buttons to your heart's content:
-**setButtonDetails(boolean isSaveButton,
+```
+setButtonDetails(boolean isSaveButton,
                    @Nullable String text,
                    @Nullable Integer backgroundColor,
                    @Nullable Integer textColor,
                    @Nullable Drawable buttonBackgroundDrawable,
-                   @Nullable Boolean useNullTransformationMethod);**
+                   @Nullable Boolean useNullTransformationMethod);
+```                   
                    
 Customize the Top Seek bar Drawable or color of the default one:
 
-**setTopSeekBarThumbDrawable(Drawable)**
-**setTopSeekBarThumbDrawableColor(colorResId)**                  
+```
+setTopSeekBarThumbDrawable(Drawable)
+```
+```
+setTopSeekBarThumbDrawableColor(colorResId)
+```                  
 
 Customize the Drawables used for the Start and End Video Trim images:
-**setBottomLeftAndRightSeekBarThumbDrawable(Drawable dLeft, Drawable dRight)**
+```
+setBottomLeftAndRightSeekBarThumbDrawable(Drawable dLeft, Drawable dRight)
+```
 
 Customize the Progress loading bar when loading Bitmap Thumbnails, the length of time for each animation load, and the color of the progress bar:
-**setShowProgressBarWhileLoadingBitmaps(showProgressBarWhileLoadingBitmaps)**
-**setShowProgressBarWhileLoadingBitmaps(showProgressBarWhileLoadingBitmaps, timeBetweenAnimationLoads)**
-**setShowProgressBarWhileLoadingBitmaps(showProgressBarWhileLoadingBitmaps, timeBetweenAnimationLoads, progressBarColorResId)**
+```
+setShowProgressBarWhileLoadingBitmaps(showProgressBarWhileLoadingBitmaps)
+```
+```
+setShowProgressBarWhileLoadingBitmaps(showProgressBarWhileLoadingBitmaps, timeBetweenAnimationLoads)
+```
+```
+setShowProgressBarWhileLoadingBitmaps(showProgressBarWhileLoadingBitmaps, timeBetweenAnimationLoads, progressBarColorResId)
+```
 
 Customize whether the Progress loading bar when loading Bitmap Thumbnails should be indeterminate or not:
-**setShouldProgressBarBeIndeterminate(boolean)**
+```
+setShouldProgressBarBeIndeterminate(boolean)
+```
 
 Customize the minimum required Size (In Kilobytes) required for a video to be valid. (Useful for poorly transcoded videos or invalid ones)
-**setMinimumViableVideoSizeInKb(long)**
+```
+setMinimumViableVideoSizeInKb(long)   //Defaults to 250KB
+```
 
 Mention your own path to save trimmed videos:
-**setDestinationPath(StringPath);**
+```
+setDestinationPath(StringPath);
+```
 
 Mention your desired max duration for trimmed videos:
-**setMaxDuration(int seconds);**  //Defaults to 100Seconds
+```
+setMaxDuration(int seconds);  //Defaults to 100Seconds
+```
 
 Mention your desired max file size for trimmed videos:
-**setMaxFileSize(int mb);**   //Defaults to 25Mb
+```
+setMaxFileSize(int mb);   //Defaults to 25Mb
+```
 
 Mention your desired video URI to get trimmed video:
-**setVideoURI(Uri for video to trim);**
+```
+setVideoURI(Uri for video to trim);
+```
