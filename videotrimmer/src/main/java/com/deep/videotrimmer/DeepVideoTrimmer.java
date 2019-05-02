@@ -186,6 +186,9 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 						timeLineProgressBar.setVisibility(VISIBLE);
 						float x = (float) whichThumbnail;
 						float y = (float) totalNumberOfThumbnails;
+						if(y <= 0){
+							y = x + 1;
+						}
 						float z = (100) * ((float)(x / y));
 						try {
 							ObjectAnimator objectAnimator = ObjectAnimator.ofInt(
@@ -388,14 +391,23 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
          so it fits on the screen*/
 		int videoWidth = mp.getVideoWidth();
 		int videoHeight = mp.getVideoHeight();
+		if(videoHeight <= 0){
+			videoHeight = 1;
+		}
 		float videoProportion = (float) videoWidth / (float) videoHeight;
 		int screenWidth = mLinearVideo.getWidth();
 		int screenHeight = mLinearVideo.getHeight();
+		if(screenHeight <= 0){
+			screenHeight = 1;
+		}
 		float screenProportion = (float) screenWidth / (float) screenHeight;
 		ViewGroup.LayoutParams lp = mVideoView.getLayoutParams();
 		
 		if (videoProportion > screenProportion) {
 			lp.width = screenWidth;
+			if(videoProportion <= 0){
+				videoProportion = 1;
+			}
 			lp.height = (int) ((float) screenWidth / videoProportion);
 		} else {
 			lp.width = (int) (videoProportion * (float) screenHeight);
@@ -747,7 +759,7 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	
 	private void setSeekBarPosition() {
 		
-		if (mDuration >= mMaxDuration) {
+		if ((mDuration >= mMaxDuration) && (mDuration > 0)) {
 			mStartPosition = mDuration / 2 - mMaxDuration / 2;
 			mEndPosition = mDuration / 2 + mMaxDuration / 2;
 			
@@ -858,6 +870,9 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		if (isChanged) {
 			long initSize = getFileSize();
 			long newSize;
+			if(initialLength <= 0){
+				return;
+			}
 			newSize = ((initSize / initialLength) * (mEndPosition - mStartPosition));
 			mTextSize.setText(String.format("%s %s", newSize / 1024, getContext().getString(R.string.megabyte)));
 		} else {
