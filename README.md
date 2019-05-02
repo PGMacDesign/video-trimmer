@@ -79,6 +79,9 @@ Customize the Progress loading bar when loading Bitmap Thumbnails, the length of
 Customize whether the Progress loading bar when loading Bitmap Thumbnails should be indeterminate or not:
 **setShouldProgressBarBeIndeterminate(boolean)**
 
+Customize the minimum required Size (In Kilobytes) required for a video to be valid. (Useful for poorly transcoded videos or invalid ones)
+**setMinimumViableVideoSizeInKb(long)**
+
 Mention your own path to save trimmed videos:
 **setDestinationPath(StringPath);**
 
