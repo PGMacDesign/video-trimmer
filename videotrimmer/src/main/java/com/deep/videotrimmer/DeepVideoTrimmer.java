@@ -83,6 +83,7 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	
 	private Uri mSrc;
 	private String mFinalPath;
+	private boolean userSetCustomOutput;
 	
 	private int mMaxDuration;
 	private List<OnProgressVideoListener> mListeners;
@@ -159,6 +160,7 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	
 	private void init(Context context) {
 		this.context = context;
+		this.userSetCustomOutput = false;
 		LayoutInflater.from(context).inflate(R.layout.view_time_line, this, true);
 		this.thumbnailListener = new ThumbnailGeneratingListener() {
 			@Override
@@ -271,7 +273,8 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 											mStartPosition -= (MIN_TIME_FRAME - mTimeVideo);
 										}
 									}
-									startTrimVideo(file, mFinalPath, mStartPosition, mEndPosition, mOnTrimVideoListener);
+									startTrimVideo(file, mFinalPath, mStartPosition, mEndPosition,
+											userSetCustomOutput, mOnTrimVideoListener);
 								}
 							} else {
 								try {
@@ -338,15 +341,23 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	}
 	
 	@SuppressWarnings("unused")
+	/**
+	 * Please note that this should include the path + filename + extension. IE:
+	 * (See README for example)
+	 */
 	public void setDestinationPath(final String finalPath) {
-		mFinalPath = finalPath;
-		Log.d(TAG, "Setting custom path " + mFinalPath);
+		if(finalPath != null) {
+			if(!finalPath.isEmpty()) {
+				this.mFinalPath = finalPath;
+				this.userSetCustomOutput = true;
+			}
+		}
 	}
 	
 	private void setDefaultDestinationPath() {
+//		File folder = Environment.getExternalStorageDirectory(); //Adjust default?
 		File folder = Environment.getExternalStorageDirectory();
 		mFinalPath = folder.getPath() + File.separator;
-		Log.d(TAG, "Setting default path " + mFinalPath);
 	}
 	
 	@Override
@@ -782,6 +793,7 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	
 	private void startTrimVideo(@NonNull final File file, @NonNull final String dst,
 	                            final int startVideo, final int endVideo,
+	                            final boolean userDefinedCustomDest,
 	                            @NonNull final OnTrimVideoListener callback) {
 		
 		BackgroundExecutor.execute(
@@ -789,7 +801,7 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 					@Override
 					public void execute() {
 						try {
-							TrimVideoUtils.startTrim(file, dst, startVideo, endVideo, callback);
+							TrimVideoUtils.startTrim(file, dst, startVideo, endVideo, userDefinedCustomDest, callback);
 						} catch (final Throwable e) {
 							Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
 						}

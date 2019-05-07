@@ -41,7 +41,7 @@ allprojects {
 Add this to your module level / app level file:
 
 ```
-implementation 'com.github.PGMacDesign:video-trimmer:1.2.1'
+implementation 'com.github.PGMacDesign:video-trimmer:1.2.2'
 ```   
 
 >**Note:** If you have jCenter() added, then no need to write maven dependancy. only using implementation line it will be integrated.
@@ -100,22 +100,24 @@ Customize the minimum required Size (In Kilobytes) required for a video to be va
 setMinimumViableVideoSizeInKb(long)   //Defaults to 250KB
 ```
 
-Mention your own path to save trimmed videos:
+Set your own path to save trimmed videos: (todo check on String sample, maybe use file:///storage/emulated/0/Movies/Something_2020-12-31-09_02_31.mp4 ?)
 ```
 setDestinationPath(StringPath);
 ```
 
-Mention your desired max duration for trimmed videos:
+Set your desired max duration for trimmed videos:
 ```
 setMaxDuration(int seconds);  //Defaults to 100Seconds
 ```
 
-Mention your desired max file size for trimmed videos:
+Set your desired max file size for trimmed videos:
 ```
 setMaxFileSize(int mb);   //Defaults to 25Mb
 ```
 
-Mention your desired video URI to get trimmed video:
+Set your desired video URI to begin the video trimming process:
 ```
 setVideoURI(Uri for video to trim);
 ```
+
+Please note that the above call is required and is the trigger to start the trimming operation; it should likely be called last, after the other configurations have been set.

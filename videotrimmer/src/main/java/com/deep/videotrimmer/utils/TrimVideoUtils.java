@@ -59,13 +59,26 @@ public class TrimVideoUtils {
     private static final String TAG = TrimVideoUtils.class.getSimpleName();
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    public static void startTrim(@NonNull File src, @NonNull String dst, long startMs, long endMs, @NonNull OnTrimVideoListener callback) throws IOException {
-        final String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
-        final String fileName = "MP4_" + timeStamp + ".mp4";
-        final String filePath = dst + fileName;
-
+    public static void startTrim(@NonNull File src,
+                                 @NonNull String dst,
+                                 long startMs, long endMs,
+                                 boolean userDefinedFileOutputLoc,
+                                 @NonNull OnTrimVideoListener callback) throws IOException {
+        String filePath = null;
+        if(userDefinedFileOutputLoc){
+            filePath = dst;
+        } else {
+            final String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+            final String fileName = "MP4_" + timeStamp + ".mp4";
+            filePath = dst + fileName;
+        }
         File file = new File(filePath);
-        file.getParentFile().mkdirs();
+        try {
+            //Create the parent folder if it does not exist
+            file.getParentFile().mkdirs();
+        } catch (Exception e){
+            e.printStackTrace();
+        }
         Log.d(TAG, "Generated file path " + filePath);
         genVideoUsingMp4Parser(src, file, startMs, endMs, callback);
     }
@@ -135,7 +148,13 @@ public class TrimVideoUtils {
         dst.getParentFile().mkdirs();
 
         if (!dst.exists()) {
-            dst.createNewFile();
+            try {
+                dst.createNewFile();
+            } catch (Exception e){
+                e.printStackTrace();
+                callback.invalidVideo();
+                return;
+            }
         }
         LoggingCore.setShouldLog(true);
         Container out = new DefaultMp4Builder().build(movie, new DefaultMp4Builder.Mp4TrimmerTimeCallback() {
