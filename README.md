@@ -100,10 +100,12 @@ Customize the minimum required Size (In Kilobytes) required for a video to be va
 setMinimumViableVideoSizeInKb(long)   //Defaults to 250KB
 ```
 
-Set your own path to save trimmed videos: (todo check on String sample, maybe use file:///storage/emulated/0/Movies/Something_2020-12-31-09_02_31.mp4 ?)
+Set your own path to save trimmed videos: 
 ```
 setDestinationPath(StringPath);
 ```
+A good, workable example would be: `"/storage/emulated/0/Movies/MyApp_Edited_2020-12-31-09_02_31.mp4"`
+A bad, non-working example (Will throw an exception) would be: `"file:///storage/emulated/0/Movies/MyApp_Edited_2020-12-31-09_02_31.mp4"`
 
 Set your desired max duration for trimmed videos:
 ```
