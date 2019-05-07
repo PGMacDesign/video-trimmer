@@ -55,7 +55,7 @@ implementation 'com.github.PGMacDesign:video-trimmer:1.2.2'
 
 # **Customization Settings :**
 
-### Customize the 'Save' and 'Cancel' buttons to your heart's content:
+#### Customize the 'Save' and 'Cancel' buttons to your heart's content:
 ```
 setButtonDetails(boolean isSaveButton,
                    @Nullable String text,
@@ -65,7 +65,7 @@ setButtonDetails(boolean isSaveButton,
                    @Nullable Boolean useNullTransformationMethod);
 ```                   
                    
-### Customize the Top Seek bar Drawable or color of the default one:
+#### Customize the Top Seek bar Drawable or color of the default one:
 
 ```
 setTopSeekBarThumbDrawable(Drawable)
@@ -74,12 +74,12 @@ setTopSeekBarThumbDrawable(Drawable)
 setTopSeekBarThumbDrawableColor(colorResId)
 ```                  
 
-### Customize the Drawables used for the Start and End Video Trim images:
+#### Customize the Drawables used for the Start and End Video Trim images:
 ```
 setBottomLeftAndRightSeekBarThumbDrawable(Drawable dLeft, Drawable dRight)
 ```
 
-### Customize the Progress loading bar when loading Bitmap Thumbnails, the length of time for each animation load, and the color of the progress bar:
+#### Customize the Progress loading bar when loading Bitmap Thumbnails, the length of time for each animation load, and the color of the progress bar:
 ```
 setShowProgressBarWhileLoadingBitmaps(showProgressBarWhileLoadingBitmaps)
 ```
@@ -90,38 +90,40 @@ setShowProgressBarWhileLoadingBitmaps(showProgressBarWhileLoadingBitmaps, timeBe
 setShowProgressBarWhileLoadingBitmaps(showProgressBarWhileLoadingBitmaps, timeBetweenAnimationLoads, progressBarColorResId)
 ```
 
-### Customize whether the Progress loading bar when loading Bitmap Thumbnails should be indeterminate or not:
+#### Customize whether the Progress loading bar when loading Bitmap Thumbnails should be indeterminate or not:
 ```
 setShouldProgressBarBeIndeterminate(boolean)
 ```
 
-### Customize the minimum required Size (In Kilobytes) required for a video to be valid. (Useful for poorly transcoded videos or invalid ones)
+#### Customize the minimum required Size (In Kilobytes) required for a video to be valid. (Useful for poorly transcoded videos or invalid ones)
 ```
 setMinimumViableVideoSizeInKb(long)   //Defaults to 250KB
 ```
 
-### Set your own path to save trimmed videos: 
+#### Set your own path to save trimmed videos: 
 ```
 setDestinationPath(StringPath);
 ```
 
-### A good, workable example would be: 
+A good, workable example would be: 
+
 `"/storage/emulated/0/Movies/MyApp_Edited_2020-12-31-09_02_31.mp4"`
 
-### A bad, non-working example (Will throw an exception) would be: 
+A bad, non-working example (Will throw an exception) would be: 
+
 `"file:///storage/emulated/0/Movies/MyApp_Edited_2020-12-31-09_02_31.mp4"`
 
-### Set your desired max duration for trimmed videos:
+#### Set your desired max duration for trimmed videos:
 ```
 setMaxDuration(int seconds);  //Defaults to 100Seconds
 ```
 
-### Set your desired max file size for trimmed videos:
+#### Set your desired max file size for trimmed videos:
 ```
 setMaxFileSize(int mb);   //Defaults to 25Mb
 ```
 
-### Set your desired video URI to begin the video trimming process:
+#### Set your desired video URI to begin the video trimming process:
 ```
 setVideoURI(Uri for video to trim);
 ```
