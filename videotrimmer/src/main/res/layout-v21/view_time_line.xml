@@ -39,21 +39,20 @@
         android:background="@color/background_video_color"
         android:orientation="vertical">
 
-        <LinearLayout
+        <RelativeLayout
             android:id="@+id/timeText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:visibility="visible"
-            android:weightSum="100"
             >
 
             <TextView
                 android:id="@+id/textSize"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="#FFFFFF"
-                android:layout_weight="15"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentLeft="true"
                 android:layout_marginStart="1dp"
                 android:layout_marginEnd="1dp"
                 android:gravity="start"
@@ -61,27 +60,34 @@
 
             <TextView
                 android:id="@+id/textTimeSelection"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
+                android:gravity="center|center_horizontal"
                 android:textColor="@android:color/white"
+                android:layout_toRightOf="@+id/textSize"
+                android:layout_toEndOf="@+id/textSize"
+                android:layout_toStartOf="@+id/textTime"
+                android:layout_toLeftOf="@+id/textTime"
                 android:layout_weight="55"
                 android:layout_marginStart="1dp"
                 android:layout_marginEnd="1dp"
+                android:foregroundGravity="center|center_horizontal"
                 />
 
             <TextView
                 android:id="@+id/textTime"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@android:color/white"
                 android:layout_weight="30"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
                 android:layout_marginStart="1dp"
                 android:layout_marginEnd="1dp"
                 android:gravity="end"
                 />
 
-        </LinearLayout>
+        </RelativeLayout>
 
         <SeekBar
             android:id="@+id/handlerTop"
