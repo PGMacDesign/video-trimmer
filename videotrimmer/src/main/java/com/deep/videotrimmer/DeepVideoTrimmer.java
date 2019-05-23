@@ -452,6 +452,8 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	
 	//region Public Methods
 	
+	//region Show or hide UI Elements
+	
 	/**
 	 * Should hide the bottom 2 buttons (cancel + save).
 	 * NOTE! If you enable this, you will have no way to trim the video unless you manually call
@@ -468,6 +470,32 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		}
 	}
 	
+	/**
+	 * Show or hide the text video size (Left side of the horizontal 3 linear text views)
+	 * @param show
+	 */
+	public void showTextViewTextSize(boolean show){
+		this.mTextSize.setVisibility((show) ? View.VISIBLE : View.GONE);
+	}
+	
+	/**
+	 * Show or hide the text time selection (center of the horizontal 3 linear text views)
+	 * @param show
+	 */
+	public void showTextViewTextTimeSelection(boolean show){
+		this.mTextTimeFrame.setVisibility((show) ? View.VISIBLE : View.GONE);
+	}
+	
+	/**
+	 * Show or hide the text time (Right side of the horizontal 3 linear text views)
+	 * @param show
+	 */
+	public void showTextViewTextTime(boolean show){
+		this.mTextTime.setVisibility((show) ? View.VISIBLE : View.GONE);
+	}
+	
+	
+	//endregion
 	/**
 	 * Manual trigger for the Save button. Generally used when the
 	 * {@link DeepVideoTrimmer#hideButtons(boolean)} is set and you the developer make your own

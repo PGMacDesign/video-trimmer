@@ -41,7 +41,7 @@ allprojects {
 Add this to your module level / app level file:
 
 ```
-implementation 'com.github.PGMacDesign:video-trimmer:1.2.3'
+implementation 'com.github.PGMacDesign:video-trimmer:1.2.4'
 ```   
 
 >**Note:** If you have jCenter() added, then no need to write maven dependancy. only using implementation line it will be integrated.
@@ -114,6 +114,22 @@ setShowProgressBarWhileLoadingBitmaps(showProgressBarWhileLoadingBitmaps, timeBe
 #### Customize whether the Progress loading bar when loading Bitmap Thumbnails should be indeterminate or not:
 ```
 setShouldProgressBarBeIndeterminate(boolean)
+```
+#### Show or Hide the Information Text Views
+
+(Left) Size of the video:
+```
+showTextViewTextSize(boolean)
+```
+
+(Center) TextTime of the video, the range:
+```
+showTextViewTextTimeSelection(boolean)
+```
+
+(Right) Time that the video is out of:
+```
+showTextViewTextTime(boolean)
 ```
 
 #### Customize the minimum required Size (In Kilobytes) required for a video to be valid. (Useful for poorly transcoded videos or invalid ones)
