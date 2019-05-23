@@ -80,6 +80,7 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	private TimeLineView mTimeLineView;
 	private ProgressBar timeLineProgressBar;
 	private Button viewButtonCancel, viewButtonSave;
+	private View buttons_layout;
 	
 	private Uri mSrc;
 	private String mFinalPath;
@@ -225,6 +226,7 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		this.timeLineProgressBar = findViewById(R.id.timeLineProgressBar);
 		viewButtonCancel = findViewById(R.id.btCancel);
 		viewButtonSave = findViewById(R.id.btSave);
+		buttons_layout = findViewById(R.id.buttons_layout);
 		
 		if (viewButtonCancel != null) {
 			viewButtonCancel.setOnClickListener(
@@ -242,48 +244,7 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 					new OnClickListener() {
 						@Override
 						public void onClick(View view) {
-							
-							if((getFileSizeInKB() < minimumViableVideoSizeInKb)){
-								mOnTrimVideoListener.invalidVideo();
-								try {
-									Toast.makeText(getContext(), "Your video was invalid, please select a different video", Toast.LENGTH_SHORT).show();
-								} catch (Exception e) {
-									//May trigger if done on background thread
-								}
-								return;
-							}
-							if (letUserProceed) {
-								if (mStartPosition <= 0 && mEndPosition >= mDuration) {
-									mOnTrimVideoListener.getResult(mSrc);
-								} else {
-									mPlayView.setVisibility(View.VISIBLE);
-									mVideoView.pause();
-									
-									MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-									mediaMetadataRetriever.setDataSource(getContext(), mSrc);
-									long METADATA_KEY_DURATION = Long.parseLong(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
-									
-									File file = new File(mSrc.getPath());
-									
-									if (mTimeVideo < MIN_TIME_FRAME) {
-										
-										if ((METADATA_KEY_DURATION - mEndPosition) > (MIN_TIME_FRAME - mTimeVideo)) {
-											mEndPosition += (MIN_TIME_FRAME - mTimeVideo);
-										} else if (mStartPosition > (MIN_TIME_FRAME - mTimeVideo)) {
-											mStartPosition -= (MIN_TIME_FRAME - mTimeVideo);
-										}
-									}
-									startTrimVideo(file, mFinalPath, mStartPosition, mEndPosition,
-											userSetCustomOutput, mOnTrimVideoListener);
-								}
-							} else {
-								try {
-									Toast.makeText(getContext(), "Please trim your video less than " + maxFileSize + "MB " + " of size", Toast.LENGTH_SHORT).show();
-								} catch (Exception e) {
-									//May trigger if done on background thread
-								}
-							}
-							
+							userClickedSave();
 						}
 					}
 			);
@@ -330,6 +291,51 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		this.setProgressBarColor();
 	}
 	
+	private void userClickedSave(){
+		if((getFileSizeInKB() < minimumViableVideoSizeInKb)){
+			mOnTrimVideoListener.invalidVideo();
+			try {
+				Toast.makeText(getContext(), "Your video was invalid, please select a different video", Toast.LENGTH_SHORT).show();
+			} catch (Exception e) {
+				//May trigger if done on background thread
+			}
+			return;
+		}
+		if (letUserProceed) {
+			if (mStartPosition <= 0 && mEndPosition >= mDuration) {
+				mOnTrimVideoListener.getResult(mSrc);
+			} else {
+				mPlayView.setVisibility(View.VISIBLE);
+				mVideoView.pause();
+				
+				MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+				mediaMetadataRetriever.setDataSource(getContext(), mSrc);
+				long METADATA_KEY_DURATION = Long.parseLong(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+				
+				File file = new File(mSrc.getPath());
+				
+				if (mTimeVideo < MIN_TIME_FRAME) {
+					
+					if ((METADATA_KEY_DURATION - mEndPosition) > (MIN_TIME_FRAME - mTimeVideo)) {
+						mEndPosition += (MIN_TIME_FRAME - mTimeVideo);
+					} else if (mStartPosition > (MIN_TIME_FRAME - mTimeVideo)) {
+						mStartPosition -= (MIN_TIME_FRAME - mTimeVideo);
+					}
+				}
+				startTrimVideo(file, mFinalPath, mStartPosition, mEndPosition,
+						userSetCustomOutput, mOnTrimVideoListener);
+			}
+		} else {
+			try {
+				Toast.makeText(getContext(), "Please trim your video less than " + maxFileSize + "MB " + " of size", Toast.LENGTH_SHORT).show();
+			} catch (Exception e) {
+				//May trigger if done on background thread
+			}
+		}
+	}
+	
+	//region Public URI + Destination Setting
+	
 	@SuppressWarnings("unused")
 	public void setVideoURI(final Uri videoURI) {
 		this.mSrc = videoURI;
@@ -353,6 +359,8 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 			}
 		}
 	}
+	
+	//endregion
 	
 	private void setDefaultDestinationPath() {
 //		File folder = Environment.getExternalStorageDirectory(); //Adjust default?
@@ -439,6 +447,50 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		long sizeInKB = getFileSizeInKB();
 		if(initialLength <= 0 || (sizeInKB < this.minimumViableVideoSizeInKb)){
 			this.mOnTrimVideoListener.invalidVideo();
+		}
+	}
+	
+	//region Public Methods
+	
+	/**
+	 * Should hide the bottom 2 buttons (cancel + save).
+	 * NOTE! If you enable this, you will have no way to trim the video unless you manually call
+	 * {@link DeepVideoTrimmer#triggerCancelButtonClick()} or
+	 * {@link DeepVideoTrimmer#triggerSaveButtonClick()} ()}
+	 * Only make this call if you are planning to add your own trigger events / buttons to call said methods
+	 * @param shouldHide If true, will set visibility to GONE, if false, will set visibility to VISIBLE
+	 */
+	public void hideButtons(boolean shouldHide){
+		if(this.viewButtonSave != null && this.viewButtonCancel != null) {
+			int visibility = (shouldHide) ? View.GONE : View.VISIBLE;
+			this.buttons_layout.setVisibility(visibility);
+//			this.viewButtonCancel.setVisibility(visibility);
+		}
+	}
+	
+	/**
+	 * Manual trigger for the Save button. Generally used when the
+	 * {@link DeepVideoTrimmer#hideButtons(boolean)} is set and you the developer make your own
+	 * buttons with the intent to cancel or save. IE, for use with custom buttons or click ui
+	 */
+	public void triggerSaveButtonClick(){
+		try {
+			this.userClickedSave();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Manual trigger for the Cancel button. Generally used when the
+	 * {@link DeepVideoTrimmer#hideButtons(boolean)} is set and you the developer make your own
+	 * buttons with the intent to cancel or save. IE, for use with custom buttons or click ui
+	 */
+	public void triggerCancelButtonClick(){
+		try {
+			mOnTrimVideoListener.cancelAction();
+		} catch (Exception e){
+			e.printStackTrace();
 		}
 	}
 	
@@ -727,6 +779,8 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		this.shouldProgressBarBeIndeterminate = shouldProgressBarBeIndeterminate;
 	}
 	
+	//endregion
+	
 	/**
 	 * Set the Progress Bar Color
 	 */
@@ -768,6 +822,11 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	}
 	//endregion
 	
+	//endregion
+	
+	/**
+	 * Set the seek bar position
+	 */
 	private void setSeekBarPosition() {
 		
 		if ((mDuration >= mMaxDuration) && (mDuration > 0)) {

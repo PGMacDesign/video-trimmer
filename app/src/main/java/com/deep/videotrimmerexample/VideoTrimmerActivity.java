@@ -70,6 +70,8 @@ public class VideoTrimmerActivity extends BaseActivity implements OnTrimVideoLis
         } else {
             showToastLong(getString(R.string.toast_cannot_retrieve_selected_video));
         }
+        
+        this.mVideoTrimmer.hideButtons(false);
     }
     
     @Override

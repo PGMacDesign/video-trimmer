@@ -64,6 +64,27 @@ setButtonDetails(boolean isSaveButton,
                    @Nullable Drawable buttonBackgroundDrawable,
                    @Nullable Boolean useNullTransformationMethod);
 ```                   
+ 
+#### Show or Hide the 'Save and Cancel' buttons:
+```
+hideButtons(boolean)
+```
+
+Note that if you call this, you need to manage manual trigger events for the save and cancel buttons (IE, make your own buttons) and call the `triggerCancelButtonClick()` and `triggerSaveButtonClick()` events. 
+
+#### Manually Trigger Save and Cancel Buttons
+
+If you hide the buttons using the method above, you will have no way of starting the Trim option; hence, these methods are available for custom usage:
+
+```
+triggerCancelButtonClick()
+```
+
+```
+triggerSaveButtonClick()
+```
+
+Both serve the same purpose as if the buttons were visible and clicked. 
                    
 #### Customize the Top Seek bar Drawable or color of the default one:
 
