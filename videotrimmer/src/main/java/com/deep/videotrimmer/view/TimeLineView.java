@@ -30,11 +30,13 @@ import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.LongSparseArray;
 import android.view.View;
 import android.widget.ProgressBar;
 
 import com.deep.videotrimmer.R;
+import com.deep.videotrimmer.interfaces.BackgroundErrorListener;
 import com.deep.videotrimmer.interfaces.ThumbnailGeneratingListener;
 import com.deep.videotrimmer.utils.BackgroundExecutor;
 import com.deep.videotrimmer.utils.UiThreadExecutor;
@@ -53,6 +55,7 @@ public class TimeLineView extends View {
 	private Uri mVideoUri;
 	private int mHeightView, numberOfThumbnailsToGenerate;
 	private ThumbnailGeneratingListener listener;
+	private BackgroundErrorListener backgroundErrorListener;
 	private LongSparseArray<Bitmap> mBitmapList = null;
 	
 	public TimeLineView(@NonNull Context context, AttributeSet attrs) {
@@ -67,6 +70,7 @@ public class TimeLineView extends View {
 	
 	private void init() {
 		this.listener = null;
+		this.backgroundErrorListener = null;
 		this.numberOfThumbnailsToGenerate = 0;
 		this.mHeightView = getContext().getResources().getDimensionPixelOffset(R.dimen.frames_video_height);
 		this.progressBar = new ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal);
@@ -86,7 +90,6 @@ public class TimeLineView extends View {
 	@Override
 	protected void onSizeChanged(final int w, int h, final int oldW, int oldH) {
 		super.onSizeChanged(w, h, oldW, oldH);
-		
 		if (w != oldW) {
 			getBitmap(w);
 		}
@@ -102,8 +105,10 @@ public class TimeLineView extends View {
 					@Override
 					public void execute() {
 						try {
+							if(mVideoUri == null){
+								return;
+							}
 							LongSparseArray<Bitmap> thumbnailList = new LongSparseArray<>();
-							
 							MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
 							mediaMetadataRetriever.setDataSource(getContext(), mVideoUri);
 							
@@ -119,11 +124,11 @@ public class TimeLineView extends View {
 							final long interval = videoLengthInMs / numThumbs;
 							int numberOfFailedThumbnails = 0;
 							for (int i = 0; i < numThumbs; ++i) {
-								sendPingOnListenerOnUIThread((1+i), numThumbs);
+								sendPingOnListenerOnUIThread((1 + i), numThumbs);
 								Bitmap bitmap = mediaMetadataRetriever.getFrameAtTime(i * interval, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
 								try {
 									bitmap = Bitmap.createScaledBitmap(bitmap, thumbWidth, thumbHeight, false);
-								} catch (NullPointerException npe){
+								} catch (NullPointerException npe) {
 									numberOfFailedThumbnails++;
 								} catch (Exception e) {
 									e.printStackTrace();
@@ -131,18 +136,45 @@ public class TimeLineView extends View {
 								thumbnailList.put(i, bitmap);
 							}
 							sendPingOnListenerOnUIThread(numThumbs, numThumbs);
-							if(numberOfFailedThumbnails >= (numThumbs - 1)){
+							if (numberOfFailedThumbnails >= (numThumbs - 1)) {
 								//this means there were almost no thumbnails generated, likely bad video
 								pingBadVideoCallback();
 							}
 							mediaMetadataRetriever.release();
 							returnBitmaps(thumbnailList);
+						} catch (IllegalArgumentException ile){
+							handleThrowable(ile);
 						} catch (final Throwable e) {
-							Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
+							handleThrowable(e);
 						}
 					}
 				}
 		);
+	}
+	
+	private void handleThrowable(final Throwable e){
+		if(TimeLineView.this.backgroundErrorListener != null){
+			sendErrorCallback(e.getMessage());
+		} else {
+			Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
+		}
+	}
+	
+	/**
+	 * Send a ping on the callback thread for an error
+	 * @param str
+	 */
+	private void sendErrorCallback(final String str){
+		if(this.backgroundErrorListener == null){
+			return;
+		}
+		UiThreadExecutor.runTask("",
+				new Runnable() {
+					@Override
+					public void run() {
+						backgroundErrorListener.backgroundErrorTrigger(str);
+					}
+				}, 0L);
 	}
 	
 	/**
@@ -212,8 +244,21 @@ public class TimeLineView extends View {
 		}
 	}
 	
+	/**
+	 * Set the thumbnail listener. If not set, no indication will be sent back to indicate progress
+	 * of the generation of thumbnails
+	 * @param listener
+	 */
 	public void setThumbnailListener(@NonNull ThumbnailGeneratingListener listener) {
 		this.listener = listener;
+	}
+	
+	/**
+	 * Set the background error listener. If not set, this will automatically throw exceptions instead
+	 * @param listener
+	 */
+	public void setBackgroundErrorCallbackListener(@NonNull BackgroundErrorListener listener) {
+		this.backgroundErrorListener = listener;
 	}
 	
 	public void setVideo(@NonNull Uri data) {

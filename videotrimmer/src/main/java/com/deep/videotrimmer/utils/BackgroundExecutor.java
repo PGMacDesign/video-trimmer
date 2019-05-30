@@ -17,6 +17,8 @@ package com.deep.videotrimmer.utils;
 
 import android.util.Log;
 
+import com.deep.videotrimmer.interfaces.BackgroundErrorListener;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -174,6 +176,7 @@ public final class BackgroundExecutor {
         private String serial;
         private boolean executionAsked;
         private Future<?> future;
+        private BackgroundErrorListener backgroundErrorListener;
 
         /*
          * A task can be cancelled after it has been submitted to the executor
@@ -200,6 +203,21 @@ public final class BackgroundExecutor {
             if (!"".equals(serial)) {
                 this.serial = serial;
             }
+            this.backgroundErrorListener = null;
+        }
+        
+        public Task(String id, long delay, String serial, BackgroundErrorListener backgroundErrorListener) {
+            if (!"".equals(id)) {
+                this.id = id;
+            }
+            if (delay > 0) {
+                remainingDelay = delay;
+                targetTimeMillis = System.currentTimeMillis() + delay;
+            }
+            if (!"".equals(serial)) {
+                this.serial = serial;
+            }
+            this.backgroundErrorListener = backgroundErrorListener;
         }
 
         @Override

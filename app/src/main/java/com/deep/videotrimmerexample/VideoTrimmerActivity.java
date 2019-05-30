@@ -5,6 +5,7 @@ import android.databinding.DataBindingUtil;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,12 +34,10 @@ public class VideoTrimmerActivity extends BaseActivity implements OnTrimVideoLis
         if (extraIntent != null) {
             path = extraIntent.getStringExtra(EXTRA_VIDEO_PATH);
         }
-
         mVideoTrimmer = ((DeepVideoTrimmer) findViewById(R.id.timeLine));
         timeLineBar = (RangeSeekBarView) findViewById(R.id.timeLineBar);
         textSize = (TextView) findViewById(R.id.textSize);
         tvCroppingMessage = (TextView) findViewById(R.id.tvCroppingMessage);
-
         if (mVideoTrimmer != null && path != null) {
             //Setting the bottom left and right seek bar drawables
 //            mVideoTrimmer.setBottomLeftAndRightSeekBarThumbDrawable(
@@ -70,7 +69,6 @@ public class VideoTrimmerActivity extends BaseActivity implements OnTrimVideoLis
         } else {
             showToastLong(getString(R.string.toast_cannot_retrieve_selected_video));
         }
-        
         this.mVideoTrimmer.hideButtons(false);
     }
     

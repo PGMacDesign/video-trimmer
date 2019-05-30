@@ -38,6 +38,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
+import com.deep.videotrimmer.interfaces.BackgroundErrorListener;
 import com.deep.videotrimmer.interfaces.OnProgressVideoListener;
 import com.deep.videotrimmer.interfaces.OnRangeSeekBarListener;
 import com.deep.videotrimmer.interfaces.OnTrimVideoListener;
@@ -106,6 +107,12 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	 * many are left to be created. Link: {@link ThumbnailGeneratingListener}
 	 */
 	private ThumbnailGeneratingListener thumbnailListener;
+	/**
+	 * Background error listener is used for handling errors while running in background Async
+	 * tasks. Note that if you don't implement and utilize this, exceptions will be thrown and
+	 * will not be catchable due to them being on separate threads. Link: {@link BackgroundErrorListener}
+	 */
+	private BackgroundErrorListener backgroundErrorListener;
 	private boolean showProgressBarWhileLoadingBitmaps = true;
 	private boolean shouldProgressBarBeIndeterminate = false;
 	private long animationTimeForThumbnailProgressBar;
@@ -163,6 +170,14 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		this.context = context;
 		this.userSetCustomOutput = false;
 		LayoutInflater.from(context).inflate(R.layout.view_time_line, this, true);
+		this.backgroundErrorListener = new BackgroundErrorListener() {
+			@Override
+			public void backgroundErrorTrigger(String error) {
+				if(mOnTrimVideoListener != null) {
+					mOnTrimVideoListener.invalidVideo();
+				}
+			}
+		};
 		this.thumbnailListener = new ThumbnailGeneratingListener() {
 			@Override
 			public void thumbnailGenerated(int whichThumbnail, int totalNumberOfThumbnails) {
@@ -210,7 +225,9 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 			 */
 			@Override
 			public void couldNotGenerateThumbnails() {
-				mOnTrimVideoListener.invalidVideo();
+				if(mOnTrimVideoListener != null) {
+					mOnTrimVideoListener.invalidVideo();
+				}
 			}
 		};
 		this.mHolderTopView = findViewById(R.id.handlerTop);
@@ -233,7 +250,9 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 					new OnClickListener() {
 						@Override
 						public void onClick(View view) {
-							mOnTrimVideoListener.cancelAction();
+							if(mOnTrimVideoListener != null) {
+								mOnTrimVideoListener.cancelAction();
+							}
 						}
 					}
 			);
@@ -280,7 +299,6 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		this.mVideoView.setOnPreparedListener(this);
 		this.mVideoView.setOnCompletionListener(this);
 		this.mVideoView.setOnErrorListener(this);
-		
 		this.mGestureDetector = new GestureDetector(getContext(), this.mGestureListener);
 		this.mVideoView.setOnTouchListener(mTouchListener);
 		
@@ -293,7 +311,9 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	
 	private void userClickedSave(){
 		if((getFileSizeInKB() < minimumViableVideoSizeInKb)){
-			mOnTrimVideoListener.invalidVideo();
+			if(mOnTrimVideoListener != null) {
+				mOnTrimVideoListener.invalidVideo();
+			}
 			try {
 				Toast.makeText(getContext(), "Your video was invalid, please select a different video", Toast.LENGTH_SHORT).show();
 			} catch (Exception e) {
@@ -303,7 +323,9 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		}
 		if (letUserProceed) {
 			if (mStartPosition <= 0 && mEndPosition >= mDuration) {
-				mOnTrimVideoListener.getResult(mSrc);
+				if(mOnTrimVideoListener != null) {
+					mOnTrimVideoListener.getResult(mSrc);
+				}
 			} else {
 				mPlayView.setVisibility(View.VISIBLE);
 				mVideoView.pause();
@@ -340,10 +362,11 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	public void setVideoURI(final Uri videoURI) {
 		this.mSrc = videoURI;
 		this.getSizeFile(false);
-		this.mVideoView.setVideoURI(mSrc);
-		this.mVideoView.requestFocus();
 		this.mTimeLineView.setThumbnailListener(this.thumbnailListener);
+		this.mTimeLineView.setBackgroundErrorCallbackListener(this.backgroundErrorListener);
+		this.mVideoView.setVideoURI(mSrc);
 		this.mTimeLineView.setVideo(mSrc);
+		this.mVideoView.requestFocus();
 	}
 	
 	@SuppressWarnings("unused")
@@ -446,7 +469,9 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		letUserProceed = croppedFileSize < maxFileSize;
 		long sizeInKB = getFileSizeInKB();
 		if(initialLength <= 0 || (sizeInKB < this.minimumViableVideoSizeInKb)){
-			this.mOnTrimVideoListener.invalidVideo();
+			if(mOnTrimVideoListener != null) {
+				this.mOnTrimVideoListener.invalidVideo();
+			}
 		}
 	}
 	
@@ -890,7 +915,20 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 						try {
 							TrimVideoUtils.startTrim(file, dst, startVideo, endVideo, userDefinedCustomDest, callback);
 						} catch (final Throwable e) {
-							Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
+							if(backgroundErrorListener != null){
+								UiThreadExecutor.runTask("",
+										new Runnable() {
+											@Override
+											public void run() {
+												backgroundErrorListener.backgroundErrorTrigger(e.getMessage());
+											}
+										}, 0L);
+							} else {
+								Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
+							}
+//							Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
+//							Log.d("Background error", "background error trigger, error === " + e.getMessage());
+//							callback.invalidVideo();
 						}
 					}
 				}
