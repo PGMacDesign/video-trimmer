@@ -4,7 +4,7 @@
 
 
 # Video Trimmer
-Whatsapp like video trimmer to trim videos within a defined file size.
+Whatsapp like video trimmer to trim videos within a defined file size, length, or other customization options.
 
 # Add in your project
 
@@ -32,9 +32,9 @@ implementation 'com.github.PGMacDesign:video-trimmer:1.2.6'
 Note, if you are using this in conjunction with another one of my libraries, namely [SiliCompressor](https://github.com/PGMacDesign/SiliCompressor) and are seeing this error:
 
 ```
-org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:checkDebugDuplicateClasses'.
-	...
-Duplicate class com.coremedia.iso.AbstractBoxParser$1 found in modules isoparser-1.0.6.jar 
+    org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:checkDebugDuplicateClasses'.
+    ...
+    Duplicate class com.coremedia.iso.AbstractBoxParser$1 found in modules isoparser-1.0.6.jar 
     ...
 ```
 
@@ -170,6 +170,10 @@ setVideoURI(Uri for video to trim);
 
 Please note that the above call is required and is the trigger to start the trimming operation; it should likely be called last, after the other configurations have been set.
 
+## Credit
+
+Many thanks to [Deep Patel](https://github.com/deepandroid) who wrote this project initially. 
+This project was forked from [his original here](https://github.com/deepandroid/video-trimmer) and was updated to include more customization, bugfixes, and multiple other improvements. 
 
 # Screenshots:
 **Screenshot 1 :**
