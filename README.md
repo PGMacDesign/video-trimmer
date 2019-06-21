@@ -2,21 +2,6 @@
  [![JitPack](https://jitpack.io/v/pgmacdesign/video-trimmer.svg)](https://jitpack.io/#pgmacdesign/video-trimmer)
 
 
-# Screenshots:
-**Screenshot 1 :**
-
-<img src="https://github.com/deepandroid/video-trimmer/blob/master/images/device-2018-06-06-170717.png" alt="Video Trimmer Screenshot 1" width="360" height="640" />
-
-
-**Screenshot 2 :**
-
-<img src="https://github.com/deepandroid/video-trimmer/blob/master/images/device-2018-06-06-170642.png" alt="Video Trimmer Screenshot 2" width="360" height="640" />
-
-
-**Screenshot 3 :**
-
-<img src="https://github.com/deepandroid/video-trimmer/blob/master/images/device-2018-06-06-170736.png" alt="Video Trimmer Screenshot 3" width="360" height="640" />
-
 
 # Video Trimmer
 Whatsapp like video trimmer to trim videos within a defined file size.
@@ -60,12 +45,16 @@ Adjust your implementation to exclude the following additional dependency to pre
 	    exclude group: 'com.github.PGMacDesign.mp4parser'
     }
 ```
+
+## Declaring in the XML
+
 **XML :**
 
 
      <com.deep.videotrimmer.DeepVideoTrimmer
           android:layout_width="match_parent"
           android:layout_height="match_parent" />
+
 
 # **Customization Settings :**
 
@@ -180,3 +169,21 @@ setVideoURI(Uri for video to trim);
 ```
 
 Please note that the above call is required and is the trigger to start the trimming operation; it should likely be called last, after the other configurations have been set.
+
+
+# Screenshots:
+**Screenshot 1 :**
+
+<img src="https://github.com/deepandroid/video-trimmer/blob/master/images/device-2018-06-06-170717.png" alt="Video Trimmer Screenshot 1" width="360" height="640" />
+
+
+**Screenshot 2 :**
+
+<img src="https://github.com/deepandroid/video-trimmer/blob/master/images/device-2018-06-06-170642.png" alt="Video Trimmer Screenshot 2" width="360" height="640" />
+
+
+**Screenshot 3 :**
+
+<img src="https://github.com/deepandroid/video-trimmer/blob/master/images/device-2018-06-06-170736.png" alt="Video Trimmer Screenshot 3" width="360" height="640" />
+
+
