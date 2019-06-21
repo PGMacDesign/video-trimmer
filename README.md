@@ -44,6 +44,22 @@ Add this to your module level / app level file:
 implementation 'com.github.PGMacDesign:video-trimmer:1.2.6'
 ```   
 
+Note, if you are using this in conjunction with another one of my libraries, namely [SiliCompressor](https://github.com/PGMacDesign/SiliCompressor) and are seeing this error:
+
+```
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:checkDebugDuplicateClasses'.
+	...
+Duplicate class com.coremedia.iso.AbstractBoxParser$1 found in modules isoparser-1.0.6.jar 
+    ...
+```
+
+Adjust your implementation to exclude the following additional dependency to prevent duplicate merge issues:
+
+```
+    implementation ('com.github.PGMacDesign:video-trimmer:1.2.6'){
+	    exclude group: 'com.github.PGMacDesign.mp4parser'
+    }
+```
 **XML :**
 
 
