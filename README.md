@@ -41,10 +41,8 @@ allprojects {
 Add this to your module level / app level file:
 
 ```
-implementation 'com.github.PGMacDesign:video-trimmer:1.2.5'
+implementation 'com.github.PGMacDesign:video-trimmer:1.2.6'
 ```   
-
->**Note:** If you have jCenter() added, then no need to write maven dependancy. only using implementation line it will be integrated.
 
 **XML :**
 

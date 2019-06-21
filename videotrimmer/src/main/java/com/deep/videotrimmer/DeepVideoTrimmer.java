@@ -1,6 +1,7 @@
 package com.deep.videotrimmer;
 
 import android.animation.ObjectAnimator;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
@@ -65,11 +66,14 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener,
 		SeekBar.OnSeekBarChangeListener, OnRangeSeekBarListener, OnProgressVideoListener {
 	
-	private Context context;
-	
+	//region Static Vars
 	private static final String TAG = DeepVideoTrimmer.class.getSimpleName();
 	private static final int MIN_TIME_FRAME = 1000;
 	
+	//endregion
+	
+	//region UI
+	private Context context;
 	private SeekBar mHolderTopView;
 	private RangeSeekBarView mRangeSeekBarView;
 	private RelativeLayout mLinearVideo;
@@ -79,10 +83,13 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	private TextView mTextTimeFrame;
 	private TextView mTextTime;
 	private TimeLineView mTimeLineView;
+	private LinearLayout primaryBackgroundLayout;
 	private ProgressBar timeLineProgressBar;
 	private Button viewButtonCancel, viewButtonSave;
 	private View buttons_layout;
+	//endregion
 	
+	//region Variables
 	private Uri mSrc;
 	private String mFinalPath;
 	private boolean userSetCustomOutput;
@@ -100,6 +107,7 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	private long mOriginSizeFile;
 	private long mFileSizeInKB = 0;
 	private boolean mResetSeekBar = true;
+	
 	//region Progress Bar Vars
 	
 	/**
@@ -125,6 +133,7 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	private boolean letUserProceed;
 	private GestureDetector mGestureDetector;
 	private int initialLength;
+	
 	@NonNull
 	private final GestureDetector.SimpleOnGestureListener mGestureListener = new GestureDetector.SimpleOnGestureListener() {
 		@Override
@@ -156,6 +165,9 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 			return true;
 		}
 	};
+	//endregion
+	
+	//region Constructors
 	
 	public DeepVideoTrimmer(@NonNull Context context, AttributeSet attrs) {
 		this(context, attrs, 0);
@@ -164,6 +176,551 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	public DeepVideoTrimmer(@NonNull Context context, AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
 		init(context);
+	}
+	
+	//endregion
+	
+	//region Public Methods
+	
+	//region Show or hide UI Elements
+	
+	/**
+	 * Should hide the bottom 2 buttons (cancel + save).
+	 * NOTE! If you enable this, you will have no way to trim the video unless you manually call
+	 * {@link DeepVideoTrimmer#triggerCancelButtonClick()} or
+	 * {@link DeepVideoTrimmer#triggerSaveButtonClick()} ()}
+	 * Only make this call if you are planning to add your own trigger events / buttons to call said methods
+	 * @param shouldHide If true, will set visibility to GONE, if false, will set visibility to VISIBLE
+	 */
+	public void hideButtons(boolean shouldHide){
+		if(this.viewButtonSave != null && this.viewButtonCancel != null) {
+			int visibility = (shouldHide) ? View.GONE : View.VISIBLE;
+			this.buttons_layout.setVisibility(visibility);
+//			this.viewButtonCancel.setVisibility(visibility);
+		}
+	}
+	
+	/**
+	 * Show or hide the text video size (Left side of the horizontal 3 linear text views)
+	 * @param show
+	 */
+	public void showTextViewTextSize(boolean show){
+		this.mTextSize.setVisibility((show) ? View.VISIBLE : View.GONE);
+	}
+	
+	/**
+	 * Show or hide the text time selection (center of the horizontal 3 linear text views)
+	 * @param show
+	 */
+	public void showTextViewTextTimeSelection(boolean show){
+		this.mTextTimeFrame.setVisibility((show) ? View.VISIBLE : View.GONE);
+	}
+	
+	/**
+	 * Show or hide the text time (Right side of the horizontal 3 linear text views)
+	 * @param show
+	 */
+	public void showTextViewTextTime(boolean show){
+		this.mTextTime.setVisibility((show) ? View.VISIBLE : View.GONE);
+	}
+	
+	
+	//endregion
+	
+	/**
+	 * Manual trigger for the Save button. Generally used when the
+	 * {@link DeepVideoTrimmer#hideButtons(boolean)} is set and you the developer make your own
+	 * buttons with the intent to cancel or save. IE, for use with custom buttons or click ui
+	 */
+	public void triggerSaveButtonClick(){
+		try {
+			this.userClickedSave();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Manual trigger for the Cancel button. Generally used when the
+	 * {@link DeepVideoTrimmer#hideButtons(boolean)} is set and you the developer make your own
+	 * buttons with the intent to cancel or save. IE, for use with custom buttons or click ui
+	 */
+	public void triggerCancelButtonClick(){
+		try {
+			mOnTrimVideoListener.cancelAction();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Get the max file size in Megabytes
+	 *
+	 * @return
+	 */
+	public int getMaxFileSize() {
+		return maxFileSize;
+	}
+	
+	/**
+	 * Set the max file size in MegaBytes (MB)
+	 *
+	 * @param maxFileSizeInMB Max File size in Megabytes
+	 */
+	public void setMaxFileSize(int maxFileSizeInMB) {
+		this.maxFileSize = maxFileSizeInMB;
+	}
+	
+	/**
+	 * The minimum viable video size in KB
+	 * @return long
+	 */
+	public long getMinimumViableVideoSizeInKb() {
+		return minimumViableVideoSizeInKb;
+	}
+	
+	/**
+	 * This is the minimum viable size in kb to use for trimming. Often times a video is too small
+	 * to be used and can cause problems when trying to cut. This is often the result of bad video formats
+	 * or things being converted to videos incorrectly. This will default to 250 KB, if you want to
+	 * ignore this param, just set this to zero and it will be ignored. Otherwise, if the video size
+	 * is initially less than the amount set here, it will ping the error callback:
+	 * {@link OnTrimVideoListener#invalidVideo()}
+	 * @param minimumViableVideoSizeInKb Minimum size in kilobytes that the INITIAL video should
+	 *                                   be in order to be read / parsed
+	 */
+	public void setMinimumViableVideoSizeInKb(long minimumViableVideoSizeInKb) {
+		this.minimumViableVideoSizeInKb = minimumViableVideoSizeInKb;
+	}
+	
+	/**
+	 * Used to kill all running operations
+	 */
+	public void destroy() {
+		BackgroundExecutor.cancelAll("", true);
+		UiThreadExecutor.cancelAll("");
+	}
+	
+	/**
+	 * Set the max duration in seconds
+	 * @param maxDuration
+	 */
+	public void setMaxDuration(int maxDuration) {
+		if (maxDuration == 0) {
+			mMaxDuration = (mEndPosition - mStartPosition) * 1000;
+		} else if (maxDuration < 0) {
+			mMaxDuration = -maxDuration * 1000;
+		} else {
+			mMaxDuration = maxDuration * 1000;
+		}
+	}
+	
+	/**
+	 * Get the {@link DeepVideoTrimmer#mStartPosition} variable
+	 * @return int, value of the position on the seekbar in milliseconds
+	 */
+	@SuppressWarnings("unused")
+	public int getStartPosition(){
+		return this.mStartPosition;
+	}
+	
+	/**
+	 * Get the {@link DeepVideoTrimmer#mEndPosition} variable
+	 * @return int, value of the position on the seekbar in milliseconds
+	 */
+	@SuppressWarnings("unused")
+	public int getEndPosition(){
+		return this.mEndPosition;
+	}
+	
+	@SuppressWarnings("unused")
+	public void setVideoURI(final Uri videoURI) {
+		this.mSrc = videoURI;
+		this.getSizeFile(false);
+		this.mTimeLineView.setThumbnailListener(this.thumbnailListener);
+		this.mTimeLineView.setBackgroundErrorCallbackListener(this.backgroundErrorListener);
+		this.mVideoView.setVideoURI(mSrc);
+		this.mTimeLineView.setVideo(mSrc);
+		this.mVideoView.requestFocus();
+	}
+	
+	@SuppressWarnings("unused")
+	/**
+	 * Please note that this should include the path + filename + extension. IE:
+	 * (See README for example)
+	 */
+	public void setDestinationPath(final String finalPath) {
+		if(finalPath != null) {
+			if(!finalPath.isEmpty()) {
+				this.mFinalPath = finalPath;
+				this.userSetCustomOutput = true;
+			}
+		}
+	}
+	
+	/**
+	 * Get the file size in KB
+	 * @return
+	 */
+	public long getFileSizeInKB() {
+		return (getFileSizeInBytes() / 1024);
+	}
+	
+	/**
+	 * Get the file size in Bytes
+	 * @return
+	 */
+	public long getFileSizeInBytes() {
+		File file = new File(mSrc.getPath());
+		mOriginSizeFile = file.length();
+		long fileSizeInKB = mOriginSizeFile;
+		file = null;
+		return fileSizeInKB;
+	}
+	
+	//region Custom Button Settings
+	
+	/**
+	 * Set the button Details since they currently cannot be touched
+	 * @param isSaveButton boolean, if true, these params will affect the 'save button',
+	 *                     if false, these params will affect the 'cancel button'.
+	 * @param text Text to set. If null, ignored and default it used
+	 * @param backgroundColor Background color to set. If null, ignored and default it used
+	 * @param textColor Text color to set. If null, ignored and default it used
+	 * @param buttonBackgroundDrawable {@link Drawable} Background drawable for the button.
+	 *                                                  If null, ignored and default it used
+	 * @param useNullTransformationMethod If true, will call
+	 *                                    {@link Button#setTransformationMethod(TransformationMethod)}
+	 *                                    with a null passed in. The purpose of this is to change the
+	 *                                    text from all uppercase to match the actual text passed in
+	 *                                    (case included). If null, ignored and default it used of
+	 *                                    all capital letters for the text.
+	 */
+	public void setButtonDetails(boolean isSaveButton,
+	                             @Nullable String text,
+	                             @Nullable Integer backgroundColor,
+	                             @Nullable Integer textColor,
+	                             @Nullable Drawable buttonBackgroundDrawable,
+	                             @Nullable Boolean useNullTransformationMethod){
+		Button btn = (isSaveButton) ? this.viewButtonSave : this.viewButtonCancel;
+		if(backgroundColor != null){
+			try {
+				int background;
+				try {
+					background = ContextCompat.getColor(this.context, backgroundColor);
+				} catch (Resources.NotFoundException nfe){
+					background = backgroundColor;
+				}
+				btn.setBackgroundColor(background);
+			} catch (Exception e){
+				e.printStackTrace();
+			}
+		}
+		if(textColor != null){
+			try {
+				int textCol;
+				try {
+					textCol = ContextCompat.getColor(this.context, textColor);
+				} catch (Resources.NotFoundException nfe){
+					textCol = textColor;
+				}
+				btn.setTextColor(textCol);
+			} catch (Exception e){
+				e.printStackTrace();
+			}
+		}
+		if(buttonBackgroundDrawable != null){
+			try {
+				btn.setBackground(buttonBackgroundDrawable);
+			} catch (Exception e){
+				e.printStackTrace();
+			}
+		}
+		if(text != null){
+			try {
+				btn.setText(text);
+			} catch (Exception e){
+				e.printStackTrace();
+			}
+		}
+		if(useNullTransformationMethod != null) {
+			if(useNullTransformationMethod) {
+				btn.setTransformationMethod(null);
+			}
+		}
+	}
+	//endregion
+	
+	//region Custom Drawable Setting Methods
+	
+	//region Top Seek Bar Drawable
+	/**
+	 * Set the top seek bar thumb drawable.
+	 * This will override the existing one and set whatever is passed
+	 * @param drawable
+	 */
+	public void setTopSeekBarThumbDrawable(@NonNull Drawable drawable){
+		if(drawable == null){
+			return;
+		}
+		try {
+			this.mHolderTopView.setThumb(drawable);
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Set the top seek bar thumb drawable color.
+	 * This will use the existing drawable.
+	 * @param colorResId
+	 */
+	public void setTopSeekBarThumbDrawableColor(int colorResId){
+		int color = -1;
+		try {
+			color = ContextCompat.getColor(this.context, colorResId);
+		} catch (Resources.NotFoundException e){
+			color = colorResId;
+		}
+		Drawable d = null;
+		try {
+			d = ContextCompat.getDrawable(this.context, R.drawable.text_select_handle_middle).mutate();
+			d.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+			this.mHolderTopView.setThumb(d);
+			return;
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+		try {
+			d = this.getResources().getDrawable(R.drawable.text_select_handle_middle).mutate();
+			d.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+			this.mHolderTopView.setThumb(d);
+			return;
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+	}
+	//endregion
+	
+	//region Bottom Left (Start) and Right (End) Trimmer Drawables
+	
+	/**
+	 * Set the bottom left and right seek bar thumb drawables.
+	 * This will override the existing one and set whatever is passed
+	 * @param dLeft
+	 * @param dRight
+	 */
+	public void setBottomLeftAndRightSeekBarThumbDrawable(@NonNull Drawable dLeft, @NonNull Drawable dRight){
+		try {
+			this.mRangeSeekBarView.initThumbsCustom(dLeft, dRight);
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+//	/**
+//	 * Set the top seek bar thumb drawable color.
+//	 * This will use the existing drawable.
+//	 * {@link R.drawable#text_select_handle_middle}
+//	 * @param colorResId
+//	 */
+//	public void setBottomLeftAndRightSeekBarThumbDrawableColor(int colorResId){
+//		int color = -1;
+//		try {
+//			color = ContextCompat.getColor(this.context, colorResId);
+//		} catch (Resources.NotFoundException e){
+//			e.printStackTrace();
+//			color = colorResId;
+//		}
+//		Drawable dLeft = null, dRight = null;
+//		try {
+//			dLeft = this.getResources().getDrawable(R.drawable.text_select_handle_left).mutate();
+//			dLeft.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+//		} catch (Exception e){
+//			e.printStackTrace();
+//		}
+//		try {
+//			dRight = ContextCompat.getDrawable(this.context, R.drawable.select_handle_right).mutate();
+//			dRight.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+//		} catch (Exception e){
+//			e.printStackTrace();
+//		}
+//		if(dLeft != null && dRight != null){
+//			this.mRangeSeekBarView.initThumbsCustom(dLeft, dRight);
+//		} else {
+//		}
+//	}
+	//endregion
+	
+	//region Bitmap Thumbnail Progress Bar Methods
+	
+	/**
+	 * Get whether the progress bar will show during the loading of bitmaps
+	 * @return
+	 */
+	public boolean getShowProgressBarWhileLoadingBitmaps() {
+		return showProgressBarWhileLoadingBitmaps;
+	}
+	
+	/**
+	 * Should load an animated progress bar while the bitmap (thumbnails) are loading
+	 * @param showProgressBarWhileLoadingBitmaps if true, will show, if false, will not
+	 */
+	public void setShowProgressBarWhileLoadingBitmaps(boolean showProgressBarWhileLoadingBitmaps) {
+		this.setShowProgressBarWhileLoadingBitmaps(showProgressBarWhileLoadingBitmaps, 750);
+	}
+	
+	/**
+	 * Should load an animated progress bar while the bitmap (thumbnails) are loading
+	 * @param showProgressBarWhileLoadingBitmaps if true, will show, if false, will not
+	 * @param timeBetweenAnimationLoads Animated time for each bar load. Defaults to 500
+	 *                                  milliseconds per tick / animated chunk.
+	 */
+	public void setShowProgressBarWhileLoadingBitmaps(boolean showProgressBarWhileLoadingBitmaps, long timeBetweenAnimationLoads) {
+		this.setShowProgressBarWhileLoadingBitmaps(showProgressBarWhileLoadingBitmaps, timeBetweenAnimationLoads, R.color.colorAccent);
+	}
+	
+	/**
+	 * Should load an animated progress bar while the bitmap (thumbnails) are loading
+	 * @param showProgressBarWhileLoadingBitmaps if true, will show, if false, will not
+	 * @param timeBetweenAnimationLoads Animated time for each bar load. Defaults to 500
+	 *                                  milliseconds per tick / animated chunk.
+	 * @param progressBarColorResId int color for the progress bar.
+	 */
+	public void setShowProgressBarWhileLoadingBitmaps(boolean showProgressBarWhileLoadingBitmaps,
+	                                                  long timeBetweenAnimationLoads,
+	                                                  int progressBarColorResId) {
+		this.showProgressBarWhileLoadingBitmaps = showProgressBarWhileLoadingBitmaps;
+		this.animationTimeForThumbnailProgressBar = (timeBetweenAnimationLoads < 0)
+				? 500 : timeBetweenAnimationLoads;
+		try {
+			this.progressBarColor = ContextCompat.getColor(this.context, progressBarColorResId);
+		} catch (IllegalArgumentException iae){
+			iae.printStackTrace();
+			this.progressBarColor = progressBarColorResId;
+		} catch (Resources.NotFoundException rnfe){
+			rnfe.printStackTrace();
+			this.progressBarColor = progressBarColorResId;
+		}
+		this.setProgressBarColor();
+	}
+	
+	/**
+	 * Get whether the progress bar should be indeterminate or not. Defaults to false
+	 * @return
+	 */
+	public boolean getShouldProgressBarBeIndeterminate() {
+		return shouldProgressBarBeIndeterminate;
+	}
+	
+	/**
+	 * Sets whether or not the progress bar is indeterminate instead of follows a progression
+	 * @param shouldProgressBarBeIndeterminate
+	 */
+	public void setShouldProgressBarBeIndeterminate(boolean shouldProgressBarBeIndeterminate) {
+		this.shouldProgressBarBeIndeterminate = shouldProgressBarBeIndeterminate;
+	}
+	
+	//endregion
+	
+	//region Background Color Setting
+	
+	@SuppressLint("ResourceType")
+	public void setBackgroundColor(int color){
+		try {
+			primaryBackgroundLayout.setBackgroundColor(ContextCompat.getColor(this.context, color));
+		} catch (Resources.NotFoundException e){
+			primaryBackgroundLayout.setBackgroundColor(color);
+			e.printStackTrace();
+		}
+	}
+	
+	//endregion
+	
+	/**
+	 * Set the Progress Bar Color
+	 */
+	private void setProgressBarColor(){
+		try {
+			this.timeLineProgressBar.getIndeterminateDrawable().setColorFilter(
+					this.progressBarColor,android.graphics.PorterDuff.Mode.MULTIPLY);
+			this.timeLineProgressBar.getProgressDrawable().setColorFilter(
+					this.progressBarColor,android.graphics.PorterDuff.Mode.MULTIPLY);
+			
+			// TODO: 4/29/19 above code workd on indeterminate, check below on determinate
+			LayerDrawable progressBarDrawable = (LayerDrawable) this.timeLineProgressBar.getProgressDrawable();
+			Drawable backgroundDrawable = progressBarDrawable.getDrawable(0);
+			Drawable progressDrawable = progressBarDrawable.getDrawable(1);
+			backgroundDrawable.setColorFilter(this.progressBarColor, PorterDuff.Mode.SRC_IN);
+			progressDrawable.setColorFilter(this.progressBarColor, PorterDuff.Mode.SRC_IN);
+			
+			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//				ColorStateList colorStateList = ColorStateList.valueOf(this.progressBarColor);
+//				this.timeLineProgressBar.setIndeterminateTintList(colorStateList);
+//				this.timeLineProgressBar.setIndeterminateTintMode(PorterDuff.Mode.SRC_IN);
+//				this.timeLineProgressBar.setProgressTintList(colorStateList);
+//				this.timeLineProgressBar.setProgressTintMode(PorterDuff.Mode.SRC_IN);
+//				this.timeLineProgressBar.getIndeterminateDrawable().setColorFilter(
+//						this.progressBarColor, PorterDuff.Mode.SRC_ATOP);
+//				LayerDrawable progressBarDrawable = (LayerDrawable) this.timeLineProgressBar.getProgressDrawable();
+//				Drawable backgroundDrawable = progressBarDrawable.getDrawable(0);
+//				Drawable progressDrawable = progressBarDrawable.getDrawable(1);
+//				backgroundDrawable.setColorFilter(this.progressBarColor, PorterDuff.Mode.SRC_IN);
+//				progressDrawable.setColorFilter(this.progressBarColor, PorterDuff.Mode.SRC_IN);
+			} else {
+//				this.timeLineProgressBar.getIndeterminateDrawable().setColorFilter(
+//						this.progressBarColor, PorterDuff.Mode.SRC_IN);
+			}
+			
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+	}
+	//endregion
+	
+	//endregion
+	
+	//region Private Usage Functions
+	
+	/**
+	 * Start the video trimming process
+	 * @param file
+	 * @param dst
+	 * @param startVideo
+	 * @param endVideo
+	 * @param userDefinedCustomDest
+	 * @param callback
+	 */
+	private void startTrimVideo(@NonNull final File file, @NonNull final String dst,
+	                            final int startVideo, final int endVideo,
+	                            final boolean userDefinedCustomDest,
+	                            @NonNull final OnTrimVideoListener callback) {
+		
+		BackgroundExecutor.execute(
+				new BackgroundExecutor.Task("", 0L, "") {
+					@Override
+					public void execute() {
+						try {
+							TrimVideoUtils.startTrim(file, dst, startVideo, endVideo, userDefinedCustomDest, callback);
+						} catch (final Throwable e) {
+							if(backgroundErrorListener != null){
+								UiThreadExecutor.runTask("",
+										new Runnable() {
+											@Override
+											public void run() {
+												backgroundErrorListener.backgroundErrorTrigger(e.getMessage());
+											}
+										}, 0L);
+							} else {
+								Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
+							}
+//							Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
+//							Log.d("Background error", "background error trigger, error === " + e.getMessage());
+//							callback.invalidVideo();
+						}
+					}
+				}
+		);
 	}
 	
 	private void init(Context context) {
@@ -234,6 +791,7 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		ProgressBarView progressVideoView = findViewById(R.id.timeVideoView);
 		this.mRangeSeekBarView = findViewById(R.id.timeLineBar);
 		this.mLinearVideo = findViewById(R.id.layout_surface_view);
+		this.primaryBackgroundLayout = findViewById(R.id.layout);
 		this.mVideoView = findViewById(R.id.video_loader);
 		this.mPlayView = findViewById(R.id.icon_video_play);
 		this.mTextSize = findViewById(R.id.textSize);
@@ -356,39 +914,169 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		}
 	}
 	
-	//region Public URI + Destination Setting
-	
-	@SuppressWarnings("unused")
-	public void setVideoURI(final Uri videoURI) {
-		this.mSrc = videoURI;
-		this.getSizeFile(false);
-		this.mTimeLineView.setThumbnailListener(this.thumbnailListener);
-		this.mTimeLineView.setBackgroundErrorCallbackListener(this.backgroundErrorListener);
-		this.mVideoView.setVideoURI(mSrc);
-		this.mTimeLineView.setVideo(mSrc);
-		this.mVideoView.requestFocus();
+	private void setDefaultDestinationPath() {
+//		File folder = Environment.getExternalStorageDirectory(); //Adjust default?
+		File folder = Environment.getExternalStorageDirectory();
+		mFinalPath = folder.getPath() + File.separator;
 	}
 	
-	@SuppressWarnings("unused")
 	/**
-	 * Please note that this should include the path + filename + extension. IE:
-	 * (See README for example)
+	 * Set the seek bar position
 	 */
-	public void setDestinationPath(final String finalPath) {
-		if(finalPath != null) {
-			if(!finalPath.isEmpty()) {
-				this.mFinalPath = finalPath;
-				this.userSetCustomOutput = true;
+	private void setSeekBarPosition() {
+		
+		if ((mDuration >= mMaxDuration) && (mDuration > 0)) {
+			mStartPosition = mDuration / 2 - mMaxDuration / 2;
+			mEndPosition = mDuration / 2 + mMaxDuration / 2;
+			
+			mRangeSeekBarView.setThumbValue(0, (mStartPosition * 100) / mDuration);
+			mRangeSeekBarView.setThumbValue(1, (mEndPosition * 100) / mDuration);
+			
+		} else {
+			mStartPosition = 0;
+			mEndPosition = mDuration;
+		}
+		
+		setProgressBarPosition(mStartPosition);
+		mVideoView.seekTo(mStartPosition);
+		
+		mTimeVideo = mDuration;
+		mRangeSeekBarView.initMaxWidth();
+		
+		initialLength = ((mEndPosition - mStartPosition) / 1000);
+	}
+	
+	private String stringForTime(int timeMs) {
+		int totalSeconds = timeMs / 1000;
+		
+		int seconds = totalSeconds % 60;
+		int minutes = (totalSeconds / 60) % 60;
+		int hours = totalSeconds / 3600;
+		
+		Formatter mFormatter = new Formatter();
+		if (hours > 0) {
+			return mFormatter.format("%d:%02d:%02d", hours, minutes, seconds).toString();
+		} else {
+			return mFormatter.format("%02d:%02d", minutes, seconds).toString();
+		}
+	}
+	
+	private void setTimeFrames() {
+		String seconds = getContext().getString(R.string.short_seconds);
+		mTextTimeFrame.setText(String.format(
+				"%s %s - %s %s", stringForTime(mStartPosition), seconds,
+				stringForTime(mEndPosition), seconds));
+	}
+	
+	private void setTimeVideo(int position) {
+		String seconds = getContext().getString(R.string.short_seconds);
+		mTextTime.setText(String.format("%s %s", stringForTime(position), seconds));
+	}
+	
+	private void getSizeFile(boolean isChanged) {
+		if (isChanged) {
+			long initSize = getFileSize();
+			long newSize;
+			if(initialLength <= 0){
+				return;
 			}
+			newSize = ((initSize / initialLength) * (mEndPosition - mStartPosition));
+			mTextSize.setText(String.format("%s %s", newSize / 1024, getContext().getString(R.string.megabyte)));
+		} else {
+			if (mOriginSizeFile == 0) {
+				File file = new File(mSrc.getPath());
+				mOriginSizeFile = file.length();
+				mFileSizeInKB = mOriginSizeFile / 1024;
+				if (mFileSizeInKB > 1000) {
+					long fileSizeInMB = mFileSizeInKB / 1024;
+					mTextSize.setText(String.format("%s %s", fileSizeInMB, getContext().getString(R.string.megabyte)));
+				} else {
+					mTextSize.setText(String.format("%s %s", mFileSizeInKB, getContext().getString(R.string.kilobyte)));
+				}
+			}
+		}
+	}
+	
+	private long getFileSize() {
+		long fileSizeInKB = getFileSizeInKB();
+		return fileSizeInKB / 1024;
+	}
+	
+	private long getCroppedFileSize() {
+		long initSize = getFileSize();
+		long newSize;
+		if(initialLength <= 0){
+			return 0;
+		}
+		newSize = ((initSize / initialLength) * (mEndPosition - mStartPosition));
+		return newSize / 1024;
+	}
+	
+	private void updateProgress(boolean all) {
+		if (mDuration <= 0) {
+			return;
+		}
+		
+		int position = mVideoView.getCurrentPosition();
+		if (all) {
+			for (OnProgressVideoListener item : mListeners) {
+				item.updateProgress(position, mDuration, ((position * 100) / mDuration));
+			}
+		} else {
+			mListeners.get(1).updateProgress(position, mDuration, ((position * 100) / mDuration));
+		}
+	}
+	
+	private void setProgressBarPosition(int position) {
+		if (mDuration > 0) {
+			long pos = 1000L * position / mDuration;
+			mHolderTopView.setProgress((int) pos);
 		}
 	}
 	
 	//endregion
 	
-	private void setDefaultDestinationPath() {
-//		File folder = Environment.getExternalStorageDirectory(); //Adjust default?
-		File folder = Environment.getExternalStorageDirectory();
-		mFinalPath = folder.getPath() + File.separator;
+	//region Override Methods
+	
+	
+	@Override
+	public void onCreate(RangeSeekBarView rangeSeekBarView, int index, float value) {
+	
+	}
+	
+	@Override
+	public void onSeek(RangeSeekBarView rangeSeekBarView, int index, float value) {
+ /*        0 is Left selector
+         1 is right selector*/
+		switch (index) {
+			case 0: {
+				mStartPosition = (int) ((mDuration * value) / 100L);
+				mVideoView.seekTo(mStartPosition);
+				break;
+			}
+			case 1: {
+				mEndPosition = (int) ((mDuration * value) / 100L);
+				break;
+			}
+		}
+		setProgressBarPosition(mStartPosition);
+		
+		setTimeFrames();
+		getSizeFile(true);
+		mTimeVideo = mEndPosition - mStartPosition;
+		letUserProceed = getCroppedFileSize() < maxFileSize;
+	}
+	
+	@Override
+	public void onSeekStart(RangeSeekBarView rangeSeekBarView, int index, float value) {
+	
+	}
+	
+	@Override
+	public void onSeekStop(RangeSeekBarView rangeSeekBarView, int index, float value) {
+		mMessageHandler.removeMessages(SHOW_PROGRESS);
+		mVideoView.pause();
+		mPlayView.setVisibility(View.VISIBLE);
 	}
 	
 	@Override
@@ -475,594 +1163,31 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		}
 	}
 	
-	//region Public Methods
-	
-	//region Show or hide UI Elements
-	
-	/**
-	 * Should hide the bottom 2 buttons (cancel + save).
-	 * NOTE! If you enable this, you will have no way to trim the video unless you manually call
-	 * {@link DeepVideoTrimmer#triggerCancelButtonClick()} or
-	 * {@link DeepVideoTrimmer#triggerSaveButtonClick()} ()}
-	 * Only make this call if you are planning to add your own trigger events / buttons to call said methods
-	 * @param shouldHide If true, will set visibility to GONE, if false, will set visibility to VISIBLE
-	 */
-	public void hideButtons(boolean shouldHide){
-		if(this.viewButtonSave != null && this.viewButtonCancel != null) {
-			int visibility = (shouldHide) ? View.GONE : View.VISIBLE;
-			this.buttons_layout.setVisibility(visibility);
-//			this.viewButtonCancel.setVisibility(visibility);
-		}
-	}
-	
-	/**
-	 * Show or hide the text video size (Left side of the horizontal 3 linear text views)
-	 * @param show
-	 */
-	public void showTextViewTextSize(boolean show){
-		this.mTextSize.setVisibility((show) ? View.VISIBLE : View.GONE);
-	}
-	
-	/**
-	 * Show or hide the text time selection (center of the horizontal 3 linear text views)
-	 * @param show
-	 */
-	public void showTextViewTextTimeSelection(boolean show){
-		this.mTextTimeFrame.setVisibility((show) ? View.VISIBLE : View.GONE);
-	}
-	
-	/**
-	 * Show or hide the text time (Right side of the horizontal 3 linear text views)
-	 * @param show
-	 */
-	public void showTextViewTextTime(boolean show){
-		this.mTextTime.setVisibility((show) ? View.VISIBLE : View.GONE);
-	}
-	
-	
-	//endregion
-	/**
-	 * Manual trigger for the Save button. Generally used when the
-	 * {@link DeepVideoTrimmer#hideButtons(boolean)} is set and you the developer make your own
-	 * buttons with the intent to cancel or save. IE, for use with custom buttons or click ui
-	 */
-	public void triggerSaveButtonClick(){
-		try {
-			this.userClickedSave();
-		} catch (Exception e){
-			e.printStackTrace();
-		}
-	}
-	
-	/**
-	 * Manual trigger for the Cancel button. Generally used when the
-	 * {@link DeepVideoTrimmer#hideButtons(boolean)} is set and you the developer make your own
-	 * buttons with the intent to cancel or save. IE, for use with custom buttons or click ui
-	 */
-	public void triggerCancelButtonClick(){
-		try {
-			mOnTrimVideoListener.cancelAction();
-		} catch (Exception e){
-			e.printStackTrace();
-		}
-	}
-	
-	/**
-	 * Get the max file size in Megabytes
-	 *
-	 * @return
-	 */
-	public int getMaxFileSize() {
-		return maxFileSize;
-	}
-	
-	/**
-	 * Set the max file size in MegaBytes (MB)
-	 *
-	 * @param maxFileSizeInMB Max File size in Megabytes
-	 */
-	public void setMaxFileSize(int maxFileSizeInMB) {
-		this.maxFileSize = maxFileSizeInMB;
-	}
-	
-	/**
-	 * The minimum viable video size in KB
-	 * @return long
-	 */
-	public long getMinimumViableVideoSizeInKb() {
-		return minimumViableVideoSizeInKb;
-	}
-	
-	/**
-	 * This is the minimum viable size in kb to use for trimming. Often times a video is too small
-	 * to be used and can cause problems when trying to cut. This is often the result of bad video formats
-	 * or things being converted to videos incorrectly. This will default to 250 KB, if you want to
-	 * ignore this param, just set this to zero and it will be ignored. Otherwise, if the video size
-	 * is initially less than the amount set here, it will ping the error callback:
-	 * {@link OnTrimVideoListener#invalidVideo()}
-	 * @param minimumViableVideoSizeInKb Minimum size in kilobytes that the INITIAL video should
-	 *                                   be in order to be read / parsed
-	 */
-	public void setMinimumViableVideoSizeInKb(long minimumViableVideoSizeInKb) {
-		this.minimumViableVideoSizeInKb = minimumViableVideoSizeInKb;
-	}
-	
-	//region Custom Button Settings
-	
-	/**
-	 * Set the button Details since they currently cannot be touched
-	 * @param isSaveButton boolean, if true, these params will affect the 'save button',
-	 *                     if false, these params will affect the 'cancel button'.
-	 * @param text Text to set. If null, ignored and default it used
-	 * @param backgroundColor Background color to set. If null, ignored and default it used
-	 * @param textColor Text color to set. If null, ignored and default it used
-	 * @param buttonBackgroundDrawable {@link Drawable} Background drawable for the button.
-	 *                                                  If null, ignored and default it used
-	 * @param useNullTransformationMethod If true, will call
-	 *                                    {@link Button#setTransformationMethod(TransformationMethod)}
-	 *                                    with a null passed in. The purpose of this is to change the
-	 *                                    text from all uppercase to match the actual text passed in
-	 *                                    (case included). If null, ignored and default it used of
-	 *                                    all capital letters for the text.
-	 */
-	public void setButtonDetails(boolean isSaveButton,
-	                             @Nullable String text,
-	                             @Nullable Integer backgroundColor,
-	                             @Nullable Integer textColor,
-	                             @Nullable Drawable buttonBackgroundDrawable,
-	                             @Nullable Boolean useNullTransformationMethod){
-		Button btn = (isSaveButton) ? this.viewButtonSave : this.viewButtonCancel;
-		if(backgroundColor != null){
-			try {
-				int background;
-				try {
-					background = ContextCompat.getColor(this.context, backgroundColor);
-				} catch (Resources.NotFoundException nfe){
-					background = backgroundColor;
-				}
-				btn.setBackgroundColor(background);
-			} catch (Exception e){
-				e.printStackTrace();
-			}
-		}
-		if(textColor != null){
-			try {
-				int textCol;
-				try {
-					textCol = ContextCompat.getColor(this.context, textColor);
-				} catch (Resources.NotFoundException nfe){
-					textCol = textColor;
-				}
-				btn.setTextColor(textCol);
-			} catch (Exception e){
-				e.printStackTrace();
-			}
-		}
-		if(buttonBackgroundDrawable != null){
-			try {
-				btn.setBackground(buttonBackgroundDrawable);
-			} catch (Exception e){
-				e.printStackTrace();
-			}
-		}
-		if(text != null){
-			try {
-				btn.setText(text);
-			} catch (Exception e){
-				e.printStackTrace();
-			}
-		}
-		if(useNullTransformationMethod != null) {
-			if(useNullTransformationMethod) {
-				btn.setTransformationMethod(null);
-			}
-		}
-	}
-	//endregion
-	
-	//region Custom Drawable Setting Methods
-	
-	//region Top Seek Bar Drawable
-	/**
-	 * Set the top seek bar thumb drawable.
-	 * This will override the existing one and set whatever is passed
-	 * @param drawable
-	 */
-	public void setTopSeekBarThumbDrawable(@NonNull Drawable drawable){
-		if(drawable == null){
+	@Override
+	public void updateProgress(int time, int max, float scale) {
+		if (mVideoView == null) {
 			return;
 		}
-		try {
-			this.mHolderTopView.setThumb(drawable);
-		} catch (Exception e){
-			e.printStackTrace();
-		}
-	}
-	
-	/**
-	 * Set the top seek bar thumb drawable color.
-	 * This will use the existing drawable.
-	 * {@link R.drawable#text_select_handle_middle}
-	 * @param colorResId
-	 */
-	public void setTopSeekBarThumbDrawableColor(int colorResId){
-		int color = -1;
-		try {
-			color = ContextCompat.getColor(this.context, colorResId);
-		} catch (Resources.NotFoundException e){
-			color = colorResId;
-		}
-		Drawable d = null;
-		try {
-			d = ContextCompat.getDrawable(this.context, R.drawable.text_select_handle_middle).mutate();
-			d.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-			this.mHolderTopView.setThumb(d);
+		
+		if (time >= mEndPosition) {
+			mMessageHandler.removeMessages(SHOW_PROGRESS);
+			mVideoView.pause();
+			mPlayView.setVisibility(View.VISIBLE);
+			mResetSeekBar = true;
 			return;
-		} catch (Exception e){
-			e.printStackTrace();
-		}
-		try {
-			d = this.getResources().getDrawable(R.drawable.text_select_handle_middle).mutate();
-			d.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-			this.mHolderTopView.setThumb(d);
-			return;
-		} catch (Exception e){
-			e.printStackTrace();
-		}
-	}
-	//endregion
-	
-	//region Bottom Left (Start) and Right (End) Trimmer Drawables
-	
-	/**
-	 * Set the bottom left and right seek bar thumb drawables.
-	 * This will override the existing one and set whatever is passed
-	 * @param dLeft
-	 * @param dRight
-	 */
-	public void setBottomLeftAndRightSeekBarThumbDrawable(@NonNull Drawable dLeft, @NonNull Drawable dRight){
-		try {
-			this.mRangeSeekBarView.initThumbsCustom(dLeft, dRight);
-		} catch (Exception e){
-			e.printStackTrace();
-		}
-	}
-	
-//	/**
-//	 * Set the top seek bar thumb drawable color.
-//	 * This will use the existing drawable.
-//	 * {@link R.drawable#text_select_handle_middle}
-//	 * @param colorResId
-//	 */
-//	public void setBottomLeftAndRightSeekBarThumbDrawableColor(int colorResId){
-//		int color = -1;
-//		try {
-//			color = ContextCompat.getColor(this.context, colorResId);
-//		} catch (Resources.NotFoundException e){
-//			e.printStackTrace();
-//			color = colorResId;
-//		}
-//		Drawable dLeft = null, dRight = null;
-//		try {
-//			dLeft = this.getResources().getDrawable(R.drawable.text_select_handle_left).mutate();
-//			dLeft.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-//		} catch (Exception e){
-//			e.printStackTrace();
-//		}
-//		try {
-//			dRight = ContextCompat.getDrawable(this.context, R.drawable.select_handle_right).mutate();
-//			dRight.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-//		} catch (Exception e){
-//			e.printStackTrace();
-//		}
-//		if(dLeft != null && dRight != null){
-//			this.mRangeSeekBarView.initThumbsCustom(dLeft, dRight);
-//		} else {
-//		}
-//	}
-	//endregion
-	
-	//region Bitmap Thumbnail Progress Bar Methods
-	
-	/**
-	 * Get whether the progress bar will show during the loading of bitmaps
-	 * @return
-	 */
-	public boolean getShowProgressBarWhileLoadingBitmaps() {
-		return showProgressBarWhileLoadingBitmaps;
-	}
-	
-	/**
-	 * Should load an animated progress bar while the bitmap (thumbnails) are loading
-	 * @param showProgressBarWhileLoadingBitmaps if true, will show, if false, will not
-	 */
-	public void setShowProgressBarWhileLoadingBitmaps(boolean showProgressBarWhileLoadingBitmaps) {
-		this.setShowProgressBarWhileLoadingBitmaps(showProgressBarWhileLoadingBitmaps, 750);
-	}
-	
-	/**
-	 * Should load an animated progress bar while the bitmap (thumbnails) are loading
-	 * @param showProgressBarWhileLoadingBitmaps if true, will show, if false, will not
-	 * @param timeBetweenAnimationLoads Animated time for each bar load. Defaults to 500
-	 *                                  milliseconds per tick / animated chunk.
-	 */
-	public void setShowProgressBarWhileLoadingBitmaps(boolean showProgressBarWhileLoadingBitmaps, long timeBetweenAnimationLoads) {
-		this.setShowProgressBarWhileLoadingBitmaps(showProgressBarWhileLoadingBitmaps, timeBetweenAnimationLoads, R.color.colorAccent);
-	}
-	
-	/**
-	 * Should load an animated progress bar while the bitmap (thumbnails) are loading
-	 * @param showProgressBarWhileLoadingBitmaps if true, will show, if false, will not
-	 * @param timeBetweenAnimationLoads Animated time for each bar load. Defaults to 500
-	 *                                  milliseconds per tick / animated chunk.
-	 * @param progressBarColorResId int color for the progress bar. Defaults to
-	 *                         {@link R.color#colorAccent} / "#FF0800". Pass the color as the int id.
-	 */
-	public void setShowProgressBarWhileLoadingBitmaps(boolean showProgressBarWhileLoadingBitmaps,
-	                                                  long timeBetweenAnimationLoads,
-	                                                  int progressBarColorResId) {
-		this.showProgressBarWhileLoadingBitmaps = showProgressBarWhileLoadingBitmaps;
-		this.animationTimeForThumbnailProgressBar = (timeBetweenAnimationLoads < 0)
-				? 500 : timeBetweenAnimationLoads;
-		try {
-			this.progressBarColor = ContextCompat.getColor(this.context, progressBarColorResId);
-		} catch (IllegalArgumentException iae){
-			iae.printStackTrace();
-			this.progressBarColor = progressBarColorResId;
-		} catch (Resources.NotFoundException rnfe){
-			rnfe.printStackTrace();
-			this.progressBarColor = progressBarColorResId;
-		}
-		this.setProgressBarColor();
-	}
-	
-	/**
-	 * Get whether the progress bar should be indeterminate or not. Defaults to false
-	 * @return
-	 */
-	public boolean getShouldProgressBarBeIndeterminate() {
-		return shouldProgressBarBeIndeterminate;
-	}
-	
-	/**
-	 * Sets whether or not the progress bar is indeterminate instead of follows a progression
-	 * @param shouldProgressBarBeIndeterminate
-	 */
-	public void setShouldProgressBarBeIndeterminate(boolean shouldProgressBarBeIndeterminate) {
-		this.shouldProgressBarBeIndeterminate = shouldProgressBarBeIndeterminate;
-	}
-	
-	//endregion
-	
-	/**
-	 * Set the Progress Bar Color
-	 */
-	private void setProgressBarColor(){
-		try {
-			this.timeLineProgressBar.getIndeterminateDrawable().setColorFilter(
-					this.progressBarColor,android.graphics.PorterDuff.Mode.MULTIPLY);
-			this.timeLineProgressBar.getProgressDrawable().setColorFilter(
-					this.progressBarColor,android.graphics.PorterDuff.Mode.MULTIPLY);
-			
-			// TODO: 4/29/19 above code workd on indeterminate, check below on determinate
-			LayerDrawable progressBarDrawable = (LayerDrawable) this.timeLineProgressBar.getProgressDrawable();
-			Drawable backgroundDrawable = progressBarDrawable.getDrawable(0);
-			Drawable progressDrawable = progressBarDrawable.getDrawable(1);
-			backgroundDrawable.setColorFilter(this.progressBarColor, PorterDuff.Mode.SRC_IN);
-			progressDrawable.setColorFilter(this.progressBarColor, PorterDuff.Mode.SRC_IN);
-			
-			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-//				ColorStateList colorStateList = ColorStateList.valueOf(this.progressBarColor);
-//				this.timeLineProgressBar.setIndeterminateTintList(colorStateList);
-//				this.timeLineProgressBar.setIndeterminateTintMode(PorterDuff.Mode.SRC_IN);
-//				this.timeLineProgressBar.setProgressTintList(colorStateList);
-//				this.timeLineProgressBar.setProgressTintMode(PorterDuff.Mode.SRC_IN);
-//				this.timeLineProgressBar.getIndeterminateDrawable().setColorFilter(
-//						this.progressBarColor, PorterDuff.Mode.SRC_ATOP);
-//				LayerDrawable progressBarDrawable = (LayerDrawable) this.timeLineProgressBar.getProgressDrawable();
-//				Drawable backgroundDrawable = progressBarDrawable.getDrawable(0);
-//				Drawable progressDrawable = progressBarDrawable.getDrawable(1);
-//				backgroundDrawable.setColorFilter(this.progressBarColor, PorterDuff.Mode.SRC_IN);
-//				progressDrawable.setColorFilter(this.progressBarColor, PorterDuff.Mode.SRC_IN);
-			} else {
-//				this.timeLineProgressBar.getIndeterminateDrawable().setColorFilter(
-//						this.progressBarColor, PorterDuff.Mode.SRC_IN);
-			}
-			
-		} catch (Exception e){
-			e.printStackTrace();
-		}
-	}
-	//endregion
-	
-	//endregion
-	
-	/**
-	 * Set the seek bar position
-	 */
-	private void setSeekBarPosition() {
-		
-		if ((mDuration >= mMaxDuration) && (mDuration > 0)) {
-			mStartPosition = mDuration / 2 - mMaxDuration / 2;
-			mEndPosition = mDuration / 2 + mMaxDuration / 2;
-			
-			mRangeSeekBarView.setThumbValue(0, (mStartPosition * 100) / mDuration);
-			mRangeSeekBarView.setThumbValue(1, (mEndPosition * 100) / mDuration);
-			
-		} else {
-			mStartPosition = 0;
-			mEndPosition = mDuration;
 		}
 		
-		setProgressBarPosition(mStartPosition);
-		mVideoView.seekTo(mStartPosition);
-		
-		mTimeVideo = mDuration;
-		mRangeSeekBarView.initMaxWidth();
-		
-		initialLength = ((mEndPosition - mStartPosition) / 1000);
-	}
-	
-	private void startTrimVideo(@NonNull final File file, @NonNull final String dst,
-	                            final int startVideo, final int endVideo,
-	                            final boolean userDefinedCustomDest,
-	                            @NonNull final OnTrimVideoListener callback) {
-		
-		BackgroundExecutor.execute(
-				new BackgroundExecutor.Task("", 0L, "") {
-					@Override
-					public void execute() {
-						try {
-							TrimVideoUtils.startTrim(file, dst, startVideo, endVideo, userDefinedCustomDest, callback);
-						} catch (final Throwable e) {
-							if(backgroundErrorListener != null){
-								UiThreadExecutor.runTask("",
-										new Runnable() {
-											@Override
-											public void run() {
-												backgroundErrorListener.backgroundErrorTrigger(e.getMessage());
-											}
-										}, 0L);
-							} else {
-								Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
-							}
-//							Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
-//							Log.d("Background error", "background error trigger, error === " + e.getMessage());
-//							callback.invalidVideo();
-						}
-					}
-				}
-		);
-	}
-	
-	private void setTimeFrames() {
-		String seconds = getContext().getString(R.string.short_seconds);
-		mTextTimeFrame.setText(String.format(
-				"%s %s - %s %s", stringForTime(mStartPosition), seconds,
-				stringForTime(mEndPosition), seconds));
-	}
-	
-	
-	private void setTimeVideo(int position) {
-		String seconds = getContext().getString(R.string.short_seconds);
-		mTextTime.setText(String.format("%s %s", stringForTime(position), seconds));
-	}
-	
-	@Override
-	public void onCreate(RangeSeekBarView rangeSeekBarView, int index, float value) {
-	
-	}
-	
-	@Override
-	public void onSeek(RangeSeekBarView rangeSeekBarView, int index, float value) {
- /*        0 is Left selector
-         1 is right selector*/
-		switch (index) {
-			case 0: {
-				mStartPosition = (int) ((mDuration * value) / 100L);
-				mVideoView.seekTo(mStartPosition);
-				break;
-			}
-			case 1: {
-				mEndPosition = (int) ((mDuration * value) / 100L);
-				break;
-			}
+		if (mHolderTopView != null) {
+			/*use long to avoid overflow*/
+			setProgressBarPosition(time);
 		}
-		setProgressBarPosition(mStartPosition);
-		
-		setTimeFrames();
-		getSizeFile(true);
-		mTimeVideo = mEndPosition - mStartPosition;
-		letUserProceed = getCroppedFileSize() < maxFileSize;
+		setTimeVideo(time);
 	}
 	
-	@Override
-	public void onSeekStart(RangeSeekBarView rangeSeekBarView, int index, float value) {
-	
-	}
-	
-	@Override
-	public void onSeekStop(RangeSeekBarView rangeSeekBarView, int index, float value) {
-		mMessageHandler.removeMessages(SHOW_PROGRESS);
-		mVideoView.pause();
-		mPlayView.setVisibility(View.VISIBLE);
-	}
-	
-	private String stringForTime(int timeMs) {
-		int totalSeconds = timeMs / 1000;
-		
-		int seconds = totalSeconds % 60;
-		int minutes = (totalSeconds / 60) % 60;
-		int hours = totalSeconds / 3600;
-		
-		Formatter mFormatter = new Formatter();
-		if (hours > 0) {
-			return mFormatter.format("%d:%02d:%02d", hours, minutes, seconds).toString();
-		} else {
-			return mFormatter.format("%02d:%02d", minutes, seconds).toString();
-		}
-	}
-	
-	private void getSizeFile(boolean isChanged) {
-		if (isChanged) {
-			long initSize = getFileSize();
-			long newSize;
-			if(initialLength <= 0){
-				return;
-			}
-			newSize = ((initSize / initialLength) * (mEndPosition - mStartPosition));
-			mTextSize.setText(String.format("%s %s", newSize / 1024, getContext().getString(R.string.megabyte)));
-		} else {
-			if (mOriginSizeFile == 0) {
-				File file = new File(mSrc.getPath());
-				mOriginSizeFile = file.length();
-				mFileSizeInKB = mOriginSizeFile / 1024;
-				if (mFileSizeInKB > 1000) {
-					long fileSizeInMB = mFileSizeInKB / 1024;
-					mTextSize.setText(String.format("%s %s", fileSizeInMB, getContext().getString(R.string.megabyte)));
-				} else {
-					mTextSize.setText(String.format("%s %s", mFileSizeInKB, getContext().getString(R.string.kilobyte)));
-				}
-			}
-		}
-	}
-	
-	private long getFileSize() {
-		long fileSizeInKB = getFileSizeInKB();
-		return fileSizeInKB / 1024;
-	}
-	
-	private long getFileSizeInKB() {
-		File file = new File(mSrc.getPath());
-		mOriginSizeFile = file.length();
-		long fileSizeInKB = mOriginSizeFile / 1024;
-		
-		return fileSizeInKB;
-	}
-	
-	private long getCroppedFileSize() {
-		long initSize = getFileSize();
-		long newSize;
-		if(initialLength <= 0){
-			return 0;
-		}
-		newSize = ((initSize / initialLength) * (mEndPosition - mStartPosition));
-		return newSize / 1024;
-	}
 	
 	@SuppressWarnings("unused")
 	public void setOnTrimVideoListener(OnTrimVideoListener onTrimVideoListener) {
 		mOnTrimVideoListener = onTrimVideoListener;
-	}
-	
-	public void setMaxDuration(int maxDuration) {
-		if (maxDuration == 0) {
-			mMaxDuration = (mEndPosition - mStartPosition) * 1000;
-		} else if (maxDuration < 0) {
-			mMaxDuration = -maxDuration * 1000;
-		} else {
-			mMaxDuration = maxDuration * 1000;
-		}
 	}
 	
 	@Override
@@ -1074,6 +1199,10 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 	public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
 		return false;
 	}
+	
+	//endregion
+
+	//region Misc Classes
 	
 	private static class MessageHandler extends Handler {
 		
@@ -1098,52 +1227,7 @@ public class DeepVideoTrimmer extends FrameLayout implements MediaPlayer.OnError
 		}
 	}
 	
-	private void updateProgress(boolean all) {
-		if (mDuration <= 0) {
-			return;
-		}
-		
-		int position = mVideoView.getCurrentPosition();
-		if (all) {
-			for (OnProgressVideoListener item : mListeners) {
-				item.updateProgress(position, mDuration, ((position * 100) / mDuration));
-			}
-		} else {
-			mListeners.get(1).updateProgress(position, mDuration, ((position * 100) / mDuration));
-		}
-	}
-	
-	@Override
-	public void updateProgress(int time, int max, float scale) {
-		if (mVideoView == null) {
-			return;
-		}
-		
-		if (time >= mEndPosition) {
-			mMessageHandler.removeMessages(SHOW_PROGRESS);
-			mVideoView.pause();
-			mPlayView.setVisibility(View.VISIBLE);
-			mResetSeekBar = true;
-			return;
-		}
-		
-		if (mHolderTopView != null) {
-			/*use long to avoid overflow*/
-			setProgressBarPosition(time);
-		}
-		setTimeVideo(time);
-	}
+	//endregion
 	
 	
-	private void setProgressBarPosition(int position) {
-		if (mDuration > 0) {
-			long pos = 1000L * position / mDuration;
-			mHolderTopView.setProgress((int) pos);
-		}
-	}
-	
-	public void destroy() {
-		BackgroundExecutor.cancelAll("", true);
-		UiThreadExecutor.cancelAll("");
-	}
 }
