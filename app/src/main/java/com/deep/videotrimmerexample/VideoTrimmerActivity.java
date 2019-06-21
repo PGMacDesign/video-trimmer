@@ -70,11 +70,11 @@ public class VideoTrimmerActivity extends BaseActivity implements OnTrimVideoLis
             showToastLong(getString(R.string.toast_cannot_retrieve_selected_video));
         }
         this.mVideoTrimmer.hideButtons(false);
-        this.mVideoTrimmer.setOnLongClickListener(v -> {
-	        Log.d("d", "Start position == " + (mVideoTrimmer.getStartPosition()));
-	        Log.d("d", "End position == " + (mVideoTrimmer.getEndPosition()));
-	        return true;
-        });
+//        this.mVideoTrimmer.setOnLongClickListener(v -> {
+//	        Log.d("d", "Start position == " + (mVideoTrimmer.getStartPosition()));
+//	        Log.d("d", "End position == " + (mVideoTrimmer.getEndPosition()));
+//	        return true;
+//        });
     }
     
     @Override
