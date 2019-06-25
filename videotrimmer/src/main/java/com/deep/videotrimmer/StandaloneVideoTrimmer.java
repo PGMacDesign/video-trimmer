@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.deep.videotrimmer.interfaces.BackgroundErrorListener;
 import com.deep.videotrimmer.interfaces.OnTrimVideoListener;
@@ -25,7 +26,7 @@ public class StandaloneVideoTrimmer {
 			"If your 'endTimeInMilliseconds' is null you must include a 'context' variable as " +
 					"well. You are receiving this error because both values are null or invalid";
 	
-	//region Public Methods for Trimming Video
+	//region Public Methods for Trimming Video - Asynchronous
 	
 	/**
 	 * Trim a video file to the specified length and width
@@ -121,6 +122,111 @@ public class StandaloneVideoTrimmer {
 				(isValidMillisecondsTime(startTimeInMilliseconds)) ? startTimeInMilliseconds : 0,
 				(isValidMillisecondsTime(endTimeInMilliseconds)) ? endTimeInMilliseconds : ((int)getVideoLength(file, context)),
 				true, trimVideoListener);
+	}
+	
+	//endregion
+	
+	//region Public Methods for Trimming Video - Synchronous
+	
+	/**
+	 * Trim a video file synchronously to the specified length and width
+	 * Note, MAKE SURE THIS IS RUNNING ON A BACKGROUND THREAD! If not, you will cause ANR errors.
+	 * This option is available in the code because some people may want to run this in their own
+	 * asynchronous logic instead of the build-in one to this class.
+	 * @param context
+	 * @param videoToTrim
+	 * @param destinationFilePath
+	 * @param startTimeInMilliseconds the start time to begin the video trim at in milliseconds
+	 * @param endTimeInMilliseconds the end time to trim the video to in milliseconds
+	 * @throws VideoTrimmingException Will throw this exception if both the context and
+	 *         endTimeInMilliseconds variables are null. At least one must not be null
+	 */
+	public static Uri trimVideoSynchronous(@Nullable Context context,
+	                             @NonNull File videoToTrim,
+	                             @NonNull String destinationFilePath,
+	                             @Nullable Integer startTimeInMilliseconds,
+	                             @Nullable Integer endTimeInMilliseconds) throws VideoTrimmingException {
+		StandaloneVideoTrimmer.checkForValidParams(context, endTimeInMilliseconds);
+		return StandaloneVideoTrimmer.startTrimVideoSynchronously(videoToTrim, destinationFilePath,
+				(isValidMillisecondsTime(startTimeInMilliseconds)) ? startTimeInMilliseconds : 0,
+				(isValidMillisecondsTime(endTimeInMilliseconds)) ? endTimeInMilliseconds : ((int)getVideoLength(videoToTrim, context)),
+				true);
+	}
+	
+	/**
+	 * Trim a video file synchronously to the specified length and width
+	 * Note, MAKE SURE THIS IS RUNNING ON A BACKGROUND THREAD! If not, you will cause ANR errors.
+	 * This option is available in the code because some people may want to run this in their own
+	 * asynchronous logic instead of the build-in one to this class.
+	 * @param context
+	 * @param videoToTrim
+	 * @param destinationFilePath
+	 * @param startTimeInMilliseconds the start time to begin the video trim at in milliseconds
+	 * @param endTimeInMilliseconds the end time to trim the video to in milliseconds
+	 * @throws VideoTrimmingException Will throw this exception if both the context and
+	 *         endTimeInMilliseconds variables are null. At least one must not be null
+	 */
+	public static Uri trimVideoSynchronous(@Nullable Context context,
+	                             @NonNull Uri videoToTrim,
+	                             @NonNull String destinationFilePath,
+	                             @Nullable Integer startTimeInMilliseconds,
+	                             @Nullable Integer endTimeInMilliseconds) throws VideoTrimmingException {
+		File file = new File(videoToTrim.getPath());
+		StandaloneVideoTrimmer.checkForValidParams(context, endTimeInMilliseconds);
+		return StandaloneVideoTrimmer.startTrimVideoSynchronously(file, destinationFilePath,
+				(isValidMillisecondsTime(startTimeInMilliseconds)) ? startTimeInMilliseconds : 0,
+				(isValidMillisecondsTime(endTimeInMilliseconds)) ? endTimeInMilliseconds : ((int)getVideoLength(file, context)),
+				true);
+	}
+	
+	/**
+	 * Trim a video synchronously to the specified length and width
+	 * Note, MAKE SURE THIS IS RUNNING ON A BACKGROUND THREAD! If not, you will cause ANR errors.
+	 * This option is available in the code because some people may want to run this in their own
+	 * asynchronous logic instead of the build-in one to this class.
+	 * @param context
+	 * @param videoToTrim
+	 * @param startTimeInMilliseconds
+	 * @param endTimeInMilliseconds
+	 * @throws VideoTrimmingException
+	 */
+	public static Uri trimVideoSynchronous(@Nullable Context context,
+	                             @NonNull File videoToTrim,
+	                             @Nullable Integer startTimeInMilliseconds,
+	                             @Nullable Integer endTimeInMilliseconds) throws VideoTrimmingException {
+		File folder = Environment.getExternalStorageDirectory();
+		String destinationFilePath = folder.getPath() + File.separator;
+		StandaloneVideoTrimmer.checkForValidParams(context, endTimeInMilliseconds);
+		return StandaloneVideoTrimmer.startTrimVideoSynchronously(videoToTrim, destinationFilePath,
+				(isValidMillisecondsTime(startTimeInMilliseconds)) ? startTimeInMilliseconds : 0,
+				(isValidMillisecondsTime(endTimeInMilliseconds)) ? endTimeInMilliseconds : ((int)getVideoLength(videoToTrim, context)),
+				true);
+	}
+	
+	/**
+	 * Trim a video synchronously to the specified length and width.
+	 * Note, MAKE SURE THIS IS RUNNING ON A BACKGROUND THREAD! If not, you will cause ANR errors.
+	 * This option is available in the code because some people may want to run this in their own
+	 * asynchronous logic instead of the build-in one to this class.
+	 *
+	 * @param context
+	 * @param videoToTrim
+	 * @param startTimeInMilliseconds
+	 * @param endTimeInMilliseconds
+	 * @throws VideoTrimmingException
+	 */
+	public static Uri trimVideoSynchronous(@Nullable Context context,
+	                             @NonNull Uri videoToTrim,
+	                             @Nullable Integer startTimeInMilliseconds,
+	                             @Nullable Integer endTimeInMilliseconds) throws VideoTrimmingException {
+		File folder = Environment.getExternalStorageDirectory();
+		String destinationFilePath = folder.getPath() + File.separator;
+		File file = new File(videoToTrim.getPath());
+		StandaloneVideoTrimmer.checkForValidParams(context, endTimeInMilliseconds);
+		return StandaloneVideoTrimmer.startTrimVideoSynchronously(file, destinationFilePath,
+				(isValidMillisecondsTime(startTimeInMilliseconds)) ? startTimeInMilliseconds : 0,
+				(isValidMillisecondsTime(endTimeInMilliseconds)) ? endTimeInMilliseconds : ((int)getVideoLength(file, context)),
+				true);
 	}
 	
 	//endregion
@@ -210,7 +316,6 @@ public class StandaloneVideoTrimmer {
 	//endregion
 	
 	//region Private Methods
-
 	
 	/**
 	 * Start the video trimming process
@@ -240,7 +345,7 @@ public class StandaloneVideoTrimmer {
 						try {
 							TrimVideoUtils.startTrim(file, dst, startVideo, endVideo, userDefinedCustomDest, callback);
 						} catch (final Throwable e) {
-							if(backgroundErrorListener != null){
+							if (backgroundErrorListener != null) {
 								UiThreadExecutor.runTask("",
 										new Runnable() {
 											@Override
@@ -255,6 +360,45 @@ public class StandaloneVideoTrimmer {
 					}
 				}
 		);
+	}
+	
+	/**
+	 * Start the video trimming process
+	 * Note, this is a Synchronous method and will return a Uri
+	 * @param file
+	 * @param dst
+	 * @param startVideo
+	 * @param endVideo
+	 * @param userDefinedCustomDest
+	 * @return Uri of converted file. If it fails, will return null.
+	 */
+	private static Uri startTrimVideoSynchronously(@NonNull final File file, @NonNull final String dst,
+	                                   final int startVideo, final int endVideo,
+	                                   final boolean userDefinedCustomDest) {
+		
+		try {
+			OnTrimVideoListener callback = new OnTrimVideoListener() {
+				@Override
+				public void invalidVideo() {
+					Log.d("StandaloneVideoTrimmer", "Invalid Video passed as param");
+				}
+				
+				@Override
+				public void getResult(Uri uri) {
+					//No logging needed her as it is returned automatically
+				}
+				
+				@Override
+				public void cancelAction() {
+					Log.d("StandaloneVideoTrimmer", "Video Trimming Cancelled manually");
+				}
+			};
+			return TrimVideoUtils.startTrimSynchronous(file, dst,
+					startVideo, endVideo, userDefinedCustomDest, callback);
+		} catch (final Throwable e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 	
 	//endregion
