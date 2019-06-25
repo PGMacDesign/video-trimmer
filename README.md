@@ -185,6 +185,14 @@ It has both Synchronous and Asynchronous methods so it can be run either with or
 
 ### More Info on Sync vs Async Options
 
+With regards to the listed arguments in the methods below:
+
+* The context is used for parsing the end milliseconds in the event that null is passed for `endTimeInMilliseconds`. If both are passed as null, a `VideoTrimmingException` will be thrown.
+
+* The Uri is the actual Uri of the video to trim. Don't forget that if the video is referencing a non-absolute file path, it will fail. You can utilize the [FileUtils](https://github.com/PGMacDesign/video-trimmer/blob/master/videotrimmer/src/main/java/com/deep/videotrimmer/utils/FileUtils.java) `getPath()` method to help if you do not have a method to obtain the absolute path.
+
+* The start time and end time are in milliseconds. Note that if the start time is passed as null, it will default to zero seconds. If the end time is passed as null, it will use the context to obtain the end length of the video and use that as the end time limit. 
+
 #### Synchronous 
 
 ```java
@@ -196,12 +204,6 @@ public static Uri trimVideoSynchronous(@Nullable Context context,
 	...
 }
 ```
-
-The context is used for parsing the end milliseconds in the event that null is passed for `endTimeInMilliseconds`. If both are passed as null, a `VideoTrimmingException` will be thrown.
-
-The Uri is the actual Uri of the video to trim. Don't forget that if the video is referencing a non-absolute file path, it will fail. You can utilize the [FileUtils](https://github.com/PGMacDesign/video-trimmer/blob/master/videotrimmer/src/main/java/com/deep/videotrimmer/utils/FileUtils.java) `getPath()` method to help if you do not have a method to obtain the absolute path.
-
-The start time and end time are in milliseconds. Note that if the start time is passed as null, it will default to zero seconds. If the end time is passed as null, it will use the context to obtain the end length of the video and use that as the end time limit. 
 
 The Uri result will be returned from this method as opposed to using a listener.
 
@@ -217,12 +219,6 @@ public static void trimVideo(@Nullable Context context,
 	...
 }
 ```
-
-The context is used for parsing the end milliseconds in the event that null is passed for `endTimeInMilliseconds`. If both are passed as null, a `VideoTrimmingException` will be thrown.
-
-The Uri is the actual Uri of the video to trim. Don't forget that if the video is referencing a non-absolute file path, it will fail. You can utilize the [FileUtils](https://github.com/PGMacDesign/video-trimmer/blob/master/videotrimmer/src/main/java/com/deep/videotrimmer/utils/FileUtils.java) `getPath()` method to help if you do not have a method to obtain the absolute path.
-
-The start time and end time are in milliseconds. Note that if the start time is passed as null, it will default to zero seconds. If the end time is passed as null, it will use the context to obtain the end length of the video and use that as the end time limit. 
 
 The Uri result will be passed back along the `trimVideoListener`.
 
