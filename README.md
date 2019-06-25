@@ -26,7 +26,7 @@ allprojects {
 Add this to your module level / app level file:
 
 ```
-implementation 'com.github.PGMacDesign:video-trimmer:2.0.0'
+implementation 'com.github.PGMacDesign:video-trimmer:2.0.1'
 ```   
 
 Note, if you are using this in conjunction with another one of my libraries, namely [SiliCompressor](https://github.com/PGMacDesign/SiliCompressor) and are seeing this error:
@@ -41,7 +41,7 @@ Note, if you are using this in conjunction with another one of my libraries, nam
 Adjust your implementation to exclude the following additional dependency to prevent duplicate merge issues:
 
 ```
-    implementation ('com.github.PGMacDesign:video-trimmer:2.0.0'){
+    implementation ('com.github.PGMacDesign:video-trimmer:2.0.1'){
 	    exclude group: 'com.github.PGMacDesign.mp4parser'
     }
 ```
@@ -174,6 +174,57 @@ Please note that the above call is required and is the trigger to start the trim
 
 Many thanks to [Deep Patel](https://github.com/deepandroid) who wrote this project initially. 
 This project was forked from [his original here](https://github.com/deepandroid/video-trimmer) and was updated to include more customization, bugfixes, and multiple other improvements. 
+
+# **Standalone Video Trimmer :**
+
+This new updated also adds in a new utility class, the [Stand Alone Video Trimmer](https://github.com/PGMacDesign/video-trimmer/blob/master/videotrimmer/src/main/java/com/deep/videotrimmer/StandaloneVideoTrimmer.java). This class is used for running standalone video trimming without the use of any UI.
+
+The main benefit to / purpose for using this would be if you already had the desired trim milliseconds and wanted to simply trim the video without presenting the UI (IE, in a Service).
+
+It has both Synchronous and Asynchronous methods so it can be run either with or without thread management. Here are 2 of the methods in the class:
+
+### More Info on Sync vs Async Options
+
+#### Synchronous 
+
+```java
+public static Uri trimVideoSynchronous(@Nullable Context context,
+                                       @NonNull Uri videoToTrim,
+                                       @NonNull String destinationFilePath,
+                                       @Nullable Integer startTimeInMilliseconds,
+                                       @Nullable Integer endTimeInMilliseconds) throws VideoTrimmingException {
+	...
+}
+```
+
+The context is used for parsing the end milliseconds in the event that null is passed for `endTimeInMilliseconds`. If both are passed as null, a `VideoTrimmingException` will be thrown.
+
+The Uri is the actual Uri of the video to trim. Don't forget that if the video is referencing a non-absolute file path, it will fail. You can utilize the [FileUtils](https://github.com/PGMacDesign/video-trimmer/blob/master/videotrimmer/src/main/java/com/deep/videotrimmer/utils/FileUtils.java) `getPath()` method to help if you do not have a method to obtain the absolute path.
+
+The start time and end time are in milliseconds. Note that if the start time is passed as null, it will default to zero seconds. If the end time is passed as null, it will use the context to obtain the end length of the video and use that as the end time limit. 
+
+The Uri result will be returned from this method as opposed to using a listener.
+
+#### Asynchronous 
+
+```java
+public static void trimVideo(@Nullable Context context,
+                             @NonNull OnTrimVideoListener trimVideoListener,
+                             @NonNull Uri videoToTrim,
+                             @NonNull String destinationFilePath,
+                             @Nullable Integer startTimeInMilliseconds,
+                             @Nullable Integer endTimeInMilliseconds) throws VideoTrimmingException {
+	...
+}
+```
+
+The context is used for parsing the end milliseconds in the event that null is passed for `endTimeInMilliseconds`. If both are passed as null, a `VideoTrimmingException` will be thrown.
+
+The Uri is the actual Uri of the video to trim. Don't forget that if the video is referencing a non-absolute file path, it will fail. You can utilize the [FileUtils](https://github.com/PGMacDesign/video-trimmer/blob/master/videotrimmer/src/main/java/com/deep/videotrimmer/utils/FileUtils.java) `getPath()` method to help if you do not have a method to obtain the absolute path.
+
+The start time and end time are in milliseconds. Note that if the start time is passed as null, it will default to zero seconds. If the end time is passed as null, it will use the context to obtain the end length of the video and use that as the end time limit. 
+
+The Uri result will be passed back along the `trimVideoListener`.
 
 # Screenshots:
 **Screenshot 1 :**
