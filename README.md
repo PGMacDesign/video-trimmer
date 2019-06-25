@@ -26,7 +26,7 @@ allprojects {
 Add this to your module level / app level file:
 
 ```
-implementation 'com.github.PGMacDesign:video-trimmer:1.2.6'
+implementation 'com.github.PGMacDesign:video-trimmer:2.0.0'
 ```   
 
 Note, if you are using this in conjunction with another one of my libraries, namely [SiliCompressor](https://github.com/PGMacDesign/SiliCompressor) and are seeing this error:
@@ -41,7 +41,7 @@ Note, if you are using this in conjunction with another one of my libraries, nam
 Adjust your implementation to exclude the following additional dependency to prevent duplicate merge issues:
 
 ```
-    implementation ('com.github.PGMacDesign:video-trimmer:1.2.6'){
+    implementation ('com.github.PGMacDesign:video-trimmer:2.0.0'){
 	    exclude group: 'com.github.PGMacDesign.mp4parser'
     }
 ```
