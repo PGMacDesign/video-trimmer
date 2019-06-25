@@ -184,17 +184,17 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 		                    }
                     		String startTimeStringFromET = this.etStart.getText().toString();
                     		String endTimeStringFromET = this.etEnd.getText().toString();
-                    		int startTimeInMillisec = 0;
-                    		int endTimeInMillisec = 0;
+                    		Integer startTimeInMillisec = null;
+		                    Integer endTimeInMillisec = null;
                     		try {
 			                    startTimeInMillisec = 1000 * Integer.parseInt(startTimeStringFromET);
 		                    } catch (Exception e){
-                    			startTimeInMillisec = 0;
+                    			startTimeInMillisec = null;
 		                    }
 		                    try {
 			                    endTimeInMillisec = 1000 * Integer.parseInt(endTimeStringFromET);
 		                    } catch (Exception e){
-			                    endTimeInMillisec = 0;
+			                    endTimeInMillisec = null;
 		                    }
                     		fileName = fileName.replace(".mp4", "_standalonetest.mp4");
 		                    try {
