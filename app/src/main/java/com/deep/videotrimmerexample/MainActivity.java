@@ -13,11 +13,19 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.Snackbar;
+import android.util.Log;
 import android.view.View;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
+import com.deep.videotrimmer.StandaloneVideoTrimmer;
+import com.deep.videotrimmer.interfaces.OnTrimVideoListener;
 import com.deep.videotrimmer.utils.FileUtils;
 import com.deep.videotrimmerexample.databinding.ActivityMainBinding;
 
@@ -25,6 +33,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.spec.ECField;
 
 import static com.deep.videotrimmerexample.Constants.EXTRA_VIDEO_PATH;
 
@@ -37,6 +46,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private File thumbFile;
     private String selectedVideoName = null,selectedVideoFile = null;
     private RequestOptions simpleOptions;
+    private boolean isChecked;
+    private EditText etStart, etEnd;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,6 +60,19 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 .placeholder(R.color.blackOverlay)
                 .error(R.color.blackOverlay)
                 .diskCacheStrategy(DiskCacheStrategy.RESOURCE);
+        final LinearLayout linearLayout = (LinearLayout) this.findViewById(R.id.activity_main_linlay);
+	    CheckBox checkbox = (CheckBox) this.findViewById(R.id.checkbox);
+	    checkbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+	    	this.isChecked = isChecked;
+		    int visibility = (isChecked) ? View.VISIBLE : View.GONE;
+		    linearLayout.setVisibility(visibility);
+	    });
+	    this.isChecked = false;
+	    etStart = (EditText) this.findViewById(R.id.et_start_time);
+	    etEnd = (EditText) this.findViewById(R.id.et_end_time);
+	    
+	    this.etStart.setText("0");
+	    this.etEnd.setText("10");
     }
 
     @Override
@@ -148,9 +173,64 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         if (resultCode == Activity.RESULT_OK) {
             switch (requestCode) {
                 case REQUEST_VIDEO_TRIMMER:
-                    final Uri selectedUri = data.getData();
+                    Uri selectedUri = data.getData();
                     if (selectedUri != null) {
-                        startTrimActivity(selectedUri);
+                    	if(this.isChecked){
+                    		String fileName = FileUtils.getPath(this, selectedUri);
+                    		selectedUri = Uri.parse(fileName);
+                    		if(fileName == null){
+			                    startTrimActivity(selectedUri);
+			                    return;
+		                    }
+                    		String startTimeStringFromET = this.etStart.getText().toString();
+                    		String endTimeStringFromET = this.etEnd.getText().toString();
+                    		int startTimeInMillisec = 0;
+                    		int endTimeInMillisec = 0;
+                    		try {
+			                    startTimeInMillisec = 1000 * Integer.parseInt(startTimeStringFromET);
+		                    } catch (Exception e){
+                    			startTimeInMillisec = 0;
+		                    }
+		                    try {
+			                    endTimeInMillisec = 1000 * Integer.parseInt(endTimeStringFromET);
+		                    } catch (Exception e){
+			                    endTimeInMillisec = 0;
+		                    }
+                    		fileName = fileName.replace(".mp4", "_standalonetest.mp4");
+		                    try {
+			                    OnTrimVideoListener listener = new OnTrimVideoListener() {
+				                    @Override
+				                    public void invalidVideo() {
+				                    	MainActivity.this.runOnUiThread(() -> Toast.makeText(
+				                    			MainActivity.this, "An error has occurred",
+							                    Toast.LENGTH_SHORT).show());
+				                    }
+				
+				                    @Override
+				                    public void getResult(Uri uri) {
+					                    if(uri != null){
+						                    selectedVideoFile = uri.getPath();
+						                    selectedVideoName = uri.getLastPathSegment();
+						                    loadResultUri(uri);
+					                    }
+				                    }
+				
+				                    @Override
+				                    public void cancelAction() {
+					                    MainActivity.this.runOnUiThread(() -> Toast.makeText(
+							                    MainActivity.this, "User cancelled action",
+							                    Toast.LENGTH_SHORT).show());
+				                    }
+			                    };
+			                    StandaloneVideoTrimmer.trimVideo(this, listener,
+					                    selectedUri, fileName, startTimeInMillisec, endTimeInMillisec);
+		                    } catch (Exception e){
+			                    e.printStackTrace();
+		                    }
+		                    
+	                    } else {
+		                    startTrimActivity(selectedUri);
+	                    }
                     } else {
                         showToastShort(getString(R.string.toast_cannot_retrieve_selected_video));
                     }
@@ -161,18 +241,34 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                     if (selectedVideoUri != null) {
                         selectedVideoFile = data.getData().getPath();
                         selectedVideoName = data.getData().getLastPathSegment();
-                        Bitmap thumb = ThumbnailUtils.createVideoThumbnail(selectedVideoUri.getPath(),
-                                MediaStore.Images.Thumbnails.FULL_SCREEN_KIND);
-
-                        Glide.with(this)
-                                .load(getFileFromBitmap(thumb))
-                                .apply(simpleOptions)
-                                .into(mBinder.selectedVideoThumb);
+	
+	                    loadResultUri(selectedVideoUri);
                     } else {
                         showToastShort(getString(R.string.toast_cannot_retrieve_selected_video));
                     }
                     break;
             }
         }
+    }
+	
+	/**
+	 * Load Result Uri into position
+	 * @param selectedVideoUri
+	 */
+	private void loadResultUri(Uri selectedVideoUri){
+	    if (selectedVideoUri != null) {
+	    	String path = selectedVideoUri.getPath();
+		    MainActivity.this.runOnUiThread(() -> Toast.makeText(
+				    MainActivity.this, "Success. Path: " + path,
+				    Toast.LENGTH_LONG).show());
+		    Bitmap thumb = ThumbnailUtils.createVideoThumbnail(selectedVideoUri.getPath(),
+				    MediaStore.Images.Thumbnails.FULL_SCREEN_KIND);
+		    Glide.with(this)
+				    .load(getFileFromBitmap(thumb))
+				    .apply(simpleOptions)
+				    .into(mBinder.selectedVideoThumb);
+	    } else {
+		    showToastShort(getString(R.string.toast_cannot_retrieve_selected_video));
+	    }
     }
 }

@@ -34,6 +34,7 @@ public class VideoTrimmerActivity extends BaseActivity implements OnTrimVideoLis
         if (extraIntent != null) {
             path = extraIntent.getStringExtra(EXTRA_VIDEO_PATH);
         }
+        Log.d("1", "Path sent to this activity == " + path);
         mVideoTrimmer = ((DeepVideoTrimmer) findViewById(R.id.timeLine));
         timeLineBar = (RangeSeekBarView) findViewById(R.id.timeLineBar);
         textSize = (TextView) findViewById(R.id.textSize);
@@ -65,7 +66,9 @@ public class VideoTrimmerActivity extends BaseActivity implements OnTrimVideoLis
                 }
             });
             mVideoTrimmer.setOnTrimVideoListener(this);
-            mVideoTrimmer.setVideoURI(Uri.parse(path));
+            Uri uri = Uri.parse(path);
+            mVideoTrimmer.setVideoURI(uri);
+	        Log.d("1", "Uri parsed and setting into video == " + uri.toString());
         } else {
             showToastLong(getString(R.string.toast_cannot_retrieve_selected_video));
         }
@@ -109,12 +112,7 @@ public class VideoTrimmerActivity extends BaseActivity implements OnTrimVideoLis
     @Override
     public void cancelAction() {
         mVideoTrimmer.destroy();
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                tvCroppingMessage.setVisibility(View.GONE);
-            }
-        });
+        runOnUiThread(() -> tvCroppingMessage.setVisibility(View.GONE));
         finish();
     }
 }

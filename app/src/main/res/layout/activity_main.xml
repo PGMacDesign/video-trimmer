@@ -15,6 +15,53 @@
             android:layout_gravity="center"
             android:text="@string/select_video" />
 
+        <android.support.v7.widget.AppCompatCheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Should Use Standalone (Non UI)"
+            android:checked="false"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:id="@+id/checkbox"
+            android:gravity="center"
+            android:layout_gravity="center"
+            />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:id="@+id/activity_main_linlay"
+            android:orientation="horizontal"
+            android:weightSum="100"
+            android:visibility="gone"
+            >
+
+            <android.support.v7.widget.AppCompatEditText
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="50"
+                android:hint="Start Time in Seconds"
+                android:inputType="number"
+                android:id="@+id/et_start_time"
+                android:gravity="center"
+                android:layout_gravity="center"
+                />
+
+            <android.support.v7.widget.AppCompatEditText
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="50"
+                android:hint="End Time in Seconds"
+                android:inputType="number"
+                android:id="@+id/et_end_time"
+                android:gravity="center"
+                android:layout_gravity="center"
+                />
+
+        </LinearLayout>
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
