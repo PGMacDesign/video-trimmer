@@ -22,6 +22,9 @@ public class VideoTrimmerActivity extends BaseActivity implements OnTrimVideoLis
     private DeepVideoTrimmer mVideoTrimmer;
     TextView textSize, tvCroppingMessage;
     RangeSeekBarView timeLineBar;
+    
+    private long totalBytesToWrite;
+    private long totalBytesWritten;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +37,8 @@ public class VideoTrimmerActivity extends BaseActivity implements OnTrimVideoLis
         if (extraIntent != null) {
             path = extraIntent.getStringExtra(EXTRA_VIDEO_PATH);
         }
+	    this.totalBytesToWrite = 0;
+	    this.totalBytesWritten = 0;
         Log.d("1", "Path sent to this activity == " + path);
         mVideoTrimmer = ((DeepVideoTrimmer) findViewById(R.id.timeLine));
         timeLineBar = (RangeSeekBarView) findViewById(R.id.timeLineBar);

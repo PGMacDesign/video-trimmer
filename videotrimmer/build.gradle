@@ -13,7 +13,7 @@ ext {
     siteUrl = 'https://github.com/deepandroid/videotrimmer'
     gitUrl = 'https://github.com/deepandroid/videotrimmer.git'
 
-    libraryVersion = '1.1.0'
+    libraryVersion = '2.0.2'
 
     developerId = 'deeppatel'
     developerName = 'Deep Patel'
@@ -29,7 +29,7 @@ android {
         minSdkVersion 16
         targetSdkVersion 27
         versionCode 1
-        versionName "2.0.0"
+        versionName "2.0.2"
         vectorDrawables.useSupportLibrary = true
     }
     buildTypes {
@@ -41,9 +41,9 @@ android {
 }
 dependencies {
     implementation 'com.android.support:appcompat-v7:27.1.1'
-//    implementation 'com.googlecode.mp4parser:isoparser:1.1.20'
-    implementation 'com.github.PGMacDesign.mp4parser:isoparser:1.1.25'
-//    api fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.github.PGMacDesign.mp4parser:isoparser:1.2.10'//
+//    implementation 'com.github.PGMacDesign.mp4parser:isoparser:1.1.25'
+    api fileTree(dir: 'libs', include: ['*.jar'])
 }
 apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
 apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/bintrayv1.gradle'

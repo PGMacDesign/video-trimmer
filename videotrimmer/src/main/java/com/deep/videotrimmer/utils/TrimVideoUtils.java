@@ -28,7 +28,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.LoggingCore;
 import com.coremedia.iso.boxes.Container;
 import com.deep.videotrimmer.interfaces.OnTrimVideoListener;
 import com.googlecode.mp4parser.FileDataSourceViaHeapImpl;
@@ -145,7 +144,9 @@ public class TrimVideoUtils {
 	 * @return
 	 * @throws IOException
 	 */
-	private static Uri genVideoUsingMp4ParserSynchronous(@NonNull File src, @NonNull File dst, long startMs, long endMs, @Nullable OnTrimVideoListener callback) throws IOException {
+	private static Uri genVideoUsingMp4ParserSynchronous(@NonNull File src, @NonNull File dst,
+	                                                     long startMs, long endMs,
+	                                                     @Nullable OnTrimVideoListener callback) throws IOException {
 		
 		Movie movie = null;
 		try {
@@ -220,11 +221,11 @@ public class TrimVideoUtils {
 				return null;
 			}
 		}
-		LoggingCore.setShouldLog(true);
-		Container out = new DefaultMp4Builder().build(movie, new DefaultMp4Builder.Mp4TrimmerTimeCallback() {
+		Container out = new DefaultMp4Builder().build(movie, false,
+				new DefaultMp4Builder.Mp4TrimmerTimeCallback() {
 			@Override
 			public void chunkWritten(long l, long l1, float v) {
-			
+//				Log.d("t", "chunkWritten: L == " + l + ", L1 == " + l1 + ", V == " + v);
 			}
 		});
 		
